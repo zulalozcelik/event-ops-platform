@@ -1,21 +1,10 @@
-import axios from 'axios';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Event } from '../events/events.api';
-
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
-  withCredentials: true,
-});
-
-export interface Registration {
-  id: string;
-  eventId: string;
-  userId: string;
-  createdAt: string;
-}
+import { api } from '@/lib/api';
+import type { CurrentUserRegistrationState, Event } from '../events/events.api';
 
 export interface MyRegistration {
   id: string;
+  state: Exclude<CurrentUserRegistrationState, 'NONE'>;
   createdAt: string;
   event: Partial<Event>;
 }
@@ -30,9 +19,56 @@ export interface CreateRegistrationInput {
   eventId: string;
 }
 
-// ========================
-// API Call Functions
-// ========================
+export interface EventRegistrationSummary {
+  eventId: string;
+  registeredCount: number;
+  waitlistCount: number;
+  remainingCapacity: number;
+  currentUserRegistrationState: CurrentUserRegistrationState;
+}
+
+export interface RegisteredResult {
+  action: 'REGISTERED';
+  eventId: string;
+  userId: string;
+  registrationId: string;
+}
+
+export interface WaitlistedResult {
+  action: 'WAITLISTED';
+  eventId: string;
+  userId: string;
+  waitlistId: string;
+}
+
+export type RegistrationActionResult = RegisteredResult | WaitlistedResult;
+
+export interface PromotedRegistration {
+  registrationId: string;
+  waitlistId: string;
+  userId: string;
+}
+
+export interface RegistrationCancelledResult {
+  action: 'REGISTRATION_CANCELLED';
+  eventId: string;
+  userId: string;
+  registrationId: string;
+  promotedRegistration: PromotedRegistration | null;
+}
+
+export interface WaitlistLeftResult {
+  action: 'WAITLIST_LEFT';
+  eventId: string;
+  userId: string;
+  waitlistId: string;
+  promotedRegistration: null;
+}
+
+export type CancelRegistrationActionResult =
+  | RegistrationCancelledResult
+  | WaitlistLeftResult;
+
 export const fetchMyRegistrations = async (): Promise<MyRegistration[]> => {
   const { data } = await api.get('/registrations/me');
   return data;
@@ -45,21 +81,25 @@ export const fetchDashboardSummary = async (): Promise<DashboardSummary> => {
 
 export const createRegistration = async (
   input: CreateRegistrationInput,
-): Promise<Registration> => {
+): Promise<RegistrationActionResult> => {
   const { data } = await api.post('/registrations', input);
   return data;
 };
 
-export const fetchRegistrationCountForEvent = async (
+export const cancelRegistration = async (
+  eventId: string,
+): Promise<CancelRegistrationActionResult> => {
+  const { data } = await api.delete(`/registrations/${eventId}`);
+  return data;
+};
+
+export const fetchRegistrationSummaryForEvent = async (
   id: string,
-): Promise<{ count: number }> => {
+): Promise<EventRegistrationSummary> => {
   const { data } = await api.get(`/events/${id}/registrations/count`);
   return data;
 };
 
-// ========================
-// React Query Hooks
-// ========================
 export const useMyRegistrations = () => {
   return useQuery({
     queryKey: ['registrations', 'me'],
@@ -74,11 +114,11 @@ export const useDashboardSummary = () => {
   });
 };
 
-export const useEventRegistrationCount = (eventId: string) => {
+export const useEventRegistrationSummary = (eventId: string) => {
   return useQuery({
-    queryKey: ['registrations', 'count', eventId],
-    queryFn: () => fetchRegistrationCountForEvent(eventId),
-    enabled: !!eventId,
+    queryKey: ['registrations', 'summary', eventId],
+    queryFn: () => fetchRegistrationSummaryForEvent(eventId),
+    enabled: Boolean(eventId),
   });
 };
 
@@ -90,8 +130,26 @@ export const useCreateRegistration = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['registrations', 'me'] });
       queryClient.invalidateQueries({
-        queryKey: ['registrations', 'count', variables.eventId],
+        queryKey: ['registrations', 'summary', variables.eventId],
       });
+      queryClient.invalidateQueries({ queryKey: ['events', variables.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    },
+  });
+};
+
+export const useCancelRegistration = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: cancelRegistration,
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['registrations', 'me'] });
+      queryClient.invalidateQueries({
+        queryKey: ['registrations', 'summary', result.eventId],
+      });
+      queryClient.invalidateQueries({ queryKey: ['events', result.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });

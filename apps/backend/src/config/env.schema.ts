@@ -9,7 +9,7 @@ export const envSchema = z.object({
   FRONTEND_URL: z.string().url(),
 
   DATABASE_URL: z.string().min(1),
-  REDIS_URL: z.string().min(1),
+  REDIS_URL: z.string().min(1).optional(),
 
   COOKIE_SECRET: z.string().min(10),
 

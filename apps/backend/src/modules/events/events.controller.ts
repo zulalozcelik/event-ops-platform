@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Query,
   Param,
   Patch,
   Post,
@@ -20,6 +21,10 @@ import {
 } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import {
+  getEventsQuerySchema,
+  type GetEventsQueryDto,
+} from './dto/get-events-query.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '@/common/guards/optional-jwt-auth.guard';
@@ -83,12 +88,15 @@ export class EventsController {
 
   @ApiOperation({
     summary: 'List events',
-    description: 'Returns published and visible events.',
+    description:
+      'Returns published events. You can optionally filter by search text, location, and date.',
   })
   @ApiOkResponse({ description: 'Event list returned successfully.' })
   @Get()
-  async getEvents() {
-    return this.eventsService.getPublishedEvents();
+  async getEvents(@Query() query: Record<string, string | undefined>) {
+    const filters: GetEventsQueryDto = getEventsQuerySchema.parse(query);
+
+    return this.eventsService.getPublishedEvents(filters);
   }
 
   @ApiOperation({

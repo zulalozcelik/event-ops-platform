@@ -21,9 +21,17 @@ export interface UpdateEventRepositoryInput {
   status?: 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
 }
 
+export interface FindPublishedEventsFilters {
+  search?: string;
+  location?: string;
+  date?: string;
+}
+
 export interface IEventRepository {
   create(data: CreateEventRepositoryInput): Promise<Event>;
-  findAllPublishedOrVisible(): Promise<Event[]>;
+  findAllPublishedOrVisible(
+    filters?: FindPublishedEventsFilters,
+  ): Promise<Event[]>;
   findById(id: string): Promise<Event | null>;
   findByIdForOrganizer(id: string, organizerId: string): Promise<Event | null>;
   update(id: string, data: UpdateEventRepositoryInput): Promise<Event>;

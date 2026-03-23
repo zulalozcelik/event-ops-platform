@@ -13,6 +13,7 @@ import {
 } from './repositories/event.repository.interface';
 import { EVENT_REPOSITORY } from './repositories/event.repository.tokens';
 import { CreateEventDto } from './dto/create-event.dto';
+import { GetEventsQueryDto } from './dto/get-events-query.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventChangeLogsService } from '@/modules/event-change-logs/event-change-logs.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
@@ -57,8 +58,8 @@ export class EventsService {
     });
   }
 
-  async getPublishedEvents(): Promise<Event[]> {
-    return this.eventRepository.findAllPublishedOrVisible();
+  async getPublishedEvents(filters: GetEventsQueryDto): Promise<Event[]> {
+    return this.eventRepository.findAllPublishedOrVisible(filters);
   }
 
   async getEventDetail(id: string): Promise<Event> {

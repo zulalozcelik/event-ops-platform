@@ -1,29 +1,39 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useEffect, useMemo, useState } from 'react';
 import { isAxiosError } from 'axios';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeftIcon,
   CalendarIcon,
   CheckCircle2Icon,
   BellIcon,
+  Clock3Icon,
   MapPinIcon,
   PencilLineIcon,
   UsersIcon,
+  XCircleIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   useEventChangeLogs,
   useEventDetail,
+  type EventDetail,
 } from '@/features/events/events.api';
 import {
+  useCancelRegistration,
   useCreateRegistration,
-  useEventRegistrationCount,
+  type CancelRegistrationActionResult,
+  type RegistrationActionResult,
 } from '@/features/registrations/registrations.api';
 import { formatDate, formatDateTime } from '@/lib/utils/format-date';
 import { useAuthStore } from '@/store/auth-store';
+import {
+  createEventCapacitySocket,
+  type EventCapacityUpdatedPayload,
+} from '@/lib/realtime/event-capacity-socket';
 
 type ApiErrorResponse = {
   message?: string | string[];
@@ -39,18 +49,36 @@ const changeFieldLabels: Record<string, string> = {
   status: 'Status',
 };
 
-function getRegistrationErrorMessage(error: unknown): string {
+function getActionErrorMessage(error: unknown): string {
   if (!isAxiosError<ApiErrorResponse>(error)) {
-    return 'Failed to register';
+    return 'The action could not be completed.';
   }
 
   const message = error.response?.data?.message;
 
   if (Array.isArray(message)) {
-    return message[0] ?? 'Failed to register';
+    return message[0] ?? 'The action could not be completed.';
   }
 
-  return message ?? 'Failed to register';
+  return message ?? 'The action could not be completed.';
+}
+
+function getRegistrationSuccessMessage(result: RegistrationActionResult): string {
+  if (result.action === 'REGISTERED') {
+    return 'You have been registered for this event.';
+  }
+
+  return 'This event is full. You have been added to the waitlist.';
+}
+
+function getCancelSuccessMessage(result: CancelRegistrationActionResult): string {
+  if (result.action === 'REGISTRATION_CANCELLED') {
+    return result.promotedRegistration
+      ? 'Your registration was cancelled. The first person in the waitlist was moved into the event.'
+      : 'Your registration was cancelled.';
+  }
+
+  return 'You left the waitlist.';
 }
 
 function formatChangedValue(
@@ -74,18 +102,27 @@ export default function EventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const eventId = resolvedParams.id;
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
-  const [success, setSuccess] = useState(false);
+  const [feedback, setFeedback] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
-  const { data: event, isLoading, error } = useEventDetail(resolvedParams.id);
-  const { data: countData } = useEventRegistrationCount(resolvedParams.id);
+  const { data: event, isLoading, error } = useEventDetail(eventId);
   const {
     mutate: register,
     isPending: isRegistering,
     error: registerError,
   } = useCreateRegistration();
+  const {
+    mutate: cancelRegistration,
+    isPending: isCancelling,
+    error: cancelError,
+  } = useCancelRegistration();
 
   const canManageEvent = Boolean(
     user && event && (user.role === 'ADMIN' || user.id === event.organizerId),
@@ -95,7 +132,57 @@ export default function EventDetailPage({
     data: changeLogs,
     isLoading: isChangeLogsLoading,
     isError: isChangeLogsError,
-  } = useEventChangeLogs(resolvedParams.id, canManageEvent);
+  } = useEventChangeLogs(eventId, canManageEvent);
+
+  useEffect(() => {
+    let active = true;
+    let disconnectSocket: (() => void) | null = null;
+
+    void createEventCapacitySocket()
+      .then((socket) => {
+        if (!active) {
+          socket.disconnect();
+          return;
+        }
+
+        socket.emit('event.capacity.subscribe', { eventId });
+        socket.on(
+          'event.capacity.updated',
+          (payload: EventCapacityUpdatedPayload) => {
+            if (payload.eventId !== eventId) {
+              return;
+            }
+
+            queryClient.setQueryData(
+              ['events', eventId],
+              (current: EventDetail | undefined) =>
+                current
+                  ? {
+                      ...current,
+                      eventId: payload.eventId,
+                      registeredCount: payload.registeredCount,
+                      waitlistCount: payload.waitlistCount,
+                      remainingCapacity: payload.remainingCapacity,
+                    }
+                  : current,
+            );
+          },
+        );
+
+        disconnectSocket = () => {
+          socket.emit('event.capacity.unsubscribe', { eventId });
+          socket.disconnect();
+        };
+      })
+      .catch(() => {
+        return;
+      });
+
+    return () => {
+      active = false;
+      disconnectSocket?.();
+    };
+  }, [eventId, queryClient]);
 
   const handleRegister = () => {
     if (!user) {
@@ -103,15 +190,45 @@ export default function EventDetailPage({
       return;
     }
 
+    setFeedback(null);
+
     register(
-      { eventId: resolvedParams.id },
+      { eventId },
       {
-        onSuccess: () => {
-          setSuccess(true);
+        onSuccess: (result) => {
+          setFeedback({
+            type: 'success',
+            message: getRegistrationSuccessMessage(result),
+          });
         },
       },
     );
   };
+
+  const handleCancel = () => {
+    setFeedback(null);
+
+    cancelRegistration(eventId, {
+      onSuccess: (result) => {
+        setFeedback({
+          type: 'success',
+          message: getCancelSuccessMessage(result),
+        });
+      },
+    });
+  };
+
+  const actionErrorMessage = useMemo(() => {
+    if (registerError) {
+      return getActionErrorMessage(registerError);
+    }
+
+    if (cancelError) {
+      return getActionErrorMessage(cancelError);
+    }
+
+    return null;
+  }, [cancelError, registerError]);
 
   if (isLoading) {
     return (
@@ -140,10 +257,9 @@ export default function EventDetailPage({
     );
   }
 
-  const registeredCount = countData?.count ?? 0;
-  const isFull = registeredCount >= event.capacity;
   const isOrganizer = user?.id === event.organizerId;
   const wasUpdated = searchParams.get('updated') === '1';
+  const isFull = event.remainingCapacity === 0;
   const changeEntries = changeLogs?.flatMap((log) =>
     Object.entries(log.changedFields).map(([field, detail]) => ({
       id: `${log.id}-${field}`,
@@ -152,6 +268,81 @@ export default function EventDetailPage({
       createdAt: log.createdAt,
     })),
   );
+
+  const renderRegistrationAction = () => {
+    if (isOrganizer) {
+      return (
+        <div className="rounded-lg border border-border bg-surface px-4 py-4 text-sm text-text-muted">
+          You are the organizer of this event.
+        </div>
+      );
+    }
+
+    if (event.status === 'CANCELLED') {
+      return (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+          This event has been cancelled.
+        </div>
+      );
+    }
+
+    if (event.currentUserRegistrationState === 'REGISTERED') {
+      return (
+        <div className="space-y-3">
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={isCancelling}
+            onClick={handleCancel}
+          >
+            {isCancelling ? 'Cancelling...' : 'Cancel registration'}
+          </Button>
+          <p className="text-sm text-text-muted">
+            Your spot is confirmed for this event.
+          </p>
+        </div>
+      );
+    }
+
+    if (event.currentUserRegistrationState === 'WAITLISTED') {
+      return (
+        <div className="space-y-3">
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={isCancelling}
+            onClick={handleCancel}
+          >
+            {isCancelling ? 'Leaving...' : 'Leave waitlist'}
+          </Button>
+          <p className="text-sm text-text-muted">
+            You are currently waiting for an available spot.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <Button
+          className="w-full"
+          disabled={isRegistering}
+          onClick={handleRegister}
+        >
+          {isRegistering
+            ? 'Submitting...'
+            : isFull
+              ? 'Join waitlist'
+              : 'Join event'}
+        </Button>
+        <p className="text-sm text-text-muted">
+          {isFull
+            ? 'The event is full. New requests will be added to the waitlist.'
+            : 'Spots are available right now.'}
+        </p>
+      </div>
+    );
+  };
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 pb-10">
@@ -186,7 +377,7 @@ export default function EventDetailPage({
                 {event.status}
               </span>
               <span className="text-sm text-text-muted">
-                Created for attendees and organizers
+                Current state: {event.currentUserRegistrationState}
               </span>
             </div>
 
@@ -212,7 +403,7 @@ export default function EventDetailPage({
             {event.title}
           </h1>
 
-          <div className="mt-6 grid gap-3 text-sm text-text-muted md:grid-cols-3">
+          <div className="mt-6 grid gap-3 text-sm text-text-muted md:grid-cols-4">
             <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-3">
               <CalendarIcon className="h-4 w-4 text-accent" />
               <span>
@@ -225,14 +416,16 @@ export default function EventDetailPage({
             </div>
             <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-3">
               <UsersIcon className="h-4 w-4 text-accent" />
-              <span>
-                {registeredCount} / {event.capacity} registered
-              </span>
+              <span>{event.registeredCount} registered</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-3">
+              <Clock3Icon className="h-4 w-4 text-accent" />
+              <span>{event.remainingCapacity} spots left</span>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-6 px-6 py-6 md:grid-cols-[minmax(0,1fr)_300px] md:px-8">
+        <div className="grid gap-6 px-6 py-6 md:grid-cols-[minmax(0,1fr)_320px] md:px-8">
           <section className="space-y-4">
             <div className="rounded-xl border border-border bg-surface p-5">
               <h2 className="text-lg font-semibold text-text">
@@ -274,45 +467,45 @@ export default function EventDetailPage({
                 Registration
               </h2>
               <p className="mt-2 text-sm text-text-muted">
-                Capacity updates automatically as attendees join.
+                Capacity changes are updated in real time for this event.
               </p>
 
-              <div className="mt-5">
-                {isOrganizer ? (
-                  <div className="rounded-lg border border-border bg-surface px-4 py-4 text-sm text-text-muted">
-                    You are the organizer of this event.
-                  </div>
-                ) : success ? (
-                  <div className="flex flex-col items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-4 text-center text-sm text-emerald-700">
-                    <CheckCircle2Icon className="h-5 w-5" />
-                    Successfully registered.
-                  </div>
-                ) : event.status === 'CANCELLED' ? (
-                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-                    This event has been cancelled.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Button
-                      className="w-full"
-                      disabled={isFull || isRegistering}
-                      onClick={handleRegister}
-                    >
-                      {isRegistering
-                        ? 'Registering...'
-                        : isFull
-                          ? 'Event Full'
-                          : 'Register Now'}
-                    </Button>
-
-                    {registerError ? (
-                      <p className="text-sm text-destructive">
-                        {getRegistrationErrorMessage(registerError)}
-                      </p>
-                    ) : null}
-                  </div>
-                )}
+              <div className="mt-5 space-y-3 rounded-lg border border-border bg-surface px-4 py-4 text-sm text-text-muted">
+                <div className="flex items-center justify-between">
+                  <span>Registered</span>
+                  <span className="font-medium text-text">
+                    {event.registeredCount}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Waitlist</span>
+                  <span className="font-medium text-text">
+                    {event.waitlistCount}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Remaining capacity</span>
+                  <span className="font-medium text-text">
+                    {event.remainingCapacity}
+                  </span>
+                </div>
               </div>
+
+              <div className="mt-5">{renderRegistrationAction()}</div>
+
+              {actionErrorMessage ? (
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <XCircleIcon className="h-4 w-4" />
+                  <span>{actionErrorMessage}</span>
+                </div>
+              ) : null}
+
+              {feedback?.type === 'success' ? (
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  <CheckCircle2Icon className="h-4 w-4" />
+                  <span>{feedback.message}</span>
+                </div>
+              ) : null}
             </div>
           </aside>
         </div>
@@ -352,7 +545,7 @@ export default function EventDetailPage({
                       <span className="font-normal text-text-muted">
                         {formatChangedValue(field, detail.before)}
                       </span>
-                      <span className="px-2 text-text-muted">→</span>
+                      <span className="px-2 text-text-muted">-&gt;</span>
                       <span className="font-normal text-text">
                         {formatChangedValue(field, detail.after)}
                       </span>

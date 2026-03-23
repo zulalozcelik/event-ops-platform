@@ -1,11 +1,32 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useEvents } from '@/features/events/events.api';
 import { CalendarIcon, MapPinIcon, UsersIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 export default function EventsPage() {
-  const { data: events, isLoading, error } = useEvents();
+  const [search, setSearch] = useState('');
+  const [location, setLocation] = useState('');
+  const [date, setDate] = useState('');
+
+  const filters = {
+    search: search.trim() || undefined,
+    location: location.trim() || undefined,
+    date: date || undefined,
+  };
+
+  const { data: events, isLoading, error } = useEvents(filters);
+
+  const hasFilters = Boolean(filters.search || filters.location || filters.date);
+
+  const handleClearFilters = () => {
+    setSearch('');
+    setLocation('');
+    setDate('');
+  };
 
   if (isLoading) {
     return (
@@ -34,6 +55,64 @@ export default function EventsPage() {
         </h1>
       </div>
 
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-4">
+          <div className="md:col-span-2">
+            <label
+              htmlFor="search"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
+              Search
+            </label>
+            <Input
+              id="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by event name or description"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="location"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
+              Location
+            </label>
+            <Input
+              id="location"
+              value={location}
+              onChange={(event) => setLocation(event.target.value)}
+              placeholder="Filter by location"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="date"
+              className="mb-2 block text-sm font-medium text-foreground"
+            >
+              Date
+            </label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClearFilters}
+            disabled={!hasFilters}
+          >
+            Clear filters
+          </Button>
+        </div>
+      </div>
+
       {!events || events.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-12 text-center">
           <CalendarIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
@@ -41,7 +120,9 @@ export default function EventsPage() {
             No events found
           </h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            There are no active events at the moment. Check back later.
+            {hasFilters
+              ? 'No events matched your filters. Try changing or clearing the filters.'
+              : 'There are no active events at the moment. Check back later.'}
           </p>
         </div>
       ) : (

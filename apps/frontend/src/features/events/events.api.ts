@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 
 export type EventStatus = 'DRAFT' | 'PUBLISHED' | 'CANCELLED';
+export type CurrentUserRegistrationState = 'REGISTERED' | 'WAITLISTED' | 'NONE';
 
 export interface Event {
   id: string;
@@ -16,6 +17,20 @@ export interface Event {
   organizerId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface EventsFilters {
+  search?: string;
+  location?: string;
+  date?: string;
+}
+
+export interface EventDetail extends Event {
+  eventId: string;
+  registeredCount: number;
+  waitlistCount: number;
+  remainingCapacity: number;
+  currentUserRegistrationState: CurrentUserRegistrationState;
 }
 
 export interface EventChangeDetail {
@@ -62,15 +77,14 @@ type ApiErrorResponse = {
   message?: string | string[];
 };
 
-// ========================
-// API Call Functions
-// ========================
-export const fetchEvents = async (): Promise<Event[]> => {
-  const { data } = await api.get('/events');
+export const fetchEvents = async (filters: EventsFilters = {}): Promise<Event[]> => {
+  const { data } = await api.get('/events', {
+    params: filters,
+  });
   return data;
 };
 
-export const fetchEventById = async (id: string): Promise<Event> => {
+export const fetchEventById = async (id: string): Promise<EventDetail> => {
   const { data } = await api.get(`/events/${id}`);
   return data;
 };
@@ -95,13 +109,10 @@ export const fetchEventChangeLogs = async (
   return data;
 };
 
-// ========================
-// React Query Hooks
-// ========================
-export const useEvents = () => {
+export const useEvents = (filters: EventsFilters = {}) => {
   return useQuery({
-    queryKey: ['events'],
-    queryFn: fetchEvents,
+    queryKey: ['events', filters],
+    queryFn: () => fetchEvents(filters),
   });
 };
 
@@ -109,7 +120,7 @@ export const useEventDetail = (id: string) => {
   return useQuery({
     queryKey: ['events', id],
     queryFn: () => fetchEventById(id),
-    enabled: !!id,
+    enabled: Boolean(id),
   });
 };
 
@@ -141,7 +152,14 @@ export const useUpdateEvent = (id: string) => {
       });
       queryClient.invalidateQueries({ queryKey: ['notifications', 'my'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.setQueryData(['events', id], event);
+      queryClient.setQueryData(['events', id], (current: EventDetail | undefined) =>
+        current
+          ? {
+              ...current,
+              ...event,
+            }
+          : undefined,
+      );
     },
   });
 };

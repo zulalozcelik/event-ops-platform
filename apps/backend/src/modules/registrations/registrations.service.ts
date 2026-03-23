@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -57,12 +58,12 @@ export class RegistrationsService {
     } catch (error) {
       if (error instanceof RegistrationConflictError) {
         if (error.state === 'REGISTERED') {
-          throw new BadRequestException(
+          throw new ConflictException(
             'You are already registered for this event',
           );
         }
 
-        throw new BadRequestException(
+        throw new ConflictException(
           'You are already in the waitlist for this event',
         );
       }
@@ -116,6 +117,8 @@ export class RegistrationsService {
     eventId: string,
     userId?: string,
   ): Promise<EventRegistrationSummary> {
+    await this.eventsService.getEventDetail(eventId);
+
     return this.registrationRepository.getEventRegistrationSummary(eventId, userId);
   }
 
@@ -153,7 +156,7 @@ export class RegistrationsService {
     }
 
     if (event.organizerId === userId) {
-      throw new ForbiddenException(
+      throw new BadRequestException(
         'Organizers cannot register for their own events',
       );
     }
