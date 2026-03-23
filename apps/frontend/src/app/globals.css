@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #f5f7fb;
+    --surface: #ffffff;
+    --surface-muted: #eef2f7;
+    --accent: #c9852f;
+    --accent-soft: #e9c48d;
+    --border: #d9e0ea;
+    --muted: #6b7280;
+    --text: #111827;
+    --text-muted: #4b5563;
+    --card: #ffffff;
+    --foreground: #111827;
+    --muted-foreground: #6b7280;
+    --destructive: #b42318;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-text antialiased;
+  }
+}
