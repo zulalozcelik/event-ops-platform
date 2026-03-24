@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/store/auth-store';
@@ -17,11 +18,44 @@ import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils/format-date';
 
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const { initialized, isAuthenticated, user } = useAuthStore();
   const router = useRouter();
-  const { data: summary, isLoading, error } = useDashboardSummary();
+  const isOrganizer = user?.role === 'ORGANIZER' || user?.role === 'ADMIN';
+  const { data: summary, isLoading, error } = useDashboardSummary(
+    initialized && isAuthenticated && isOrganizer,
+  );
 
-  if (!user || (user.role !== 'ORGANIZER' && user.role !== 'ADMIN')) {
+  useEffect(() => {
+    if (initialized && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [initialized, isAuthenticated, router]);
+
+  if (!initialized || (isAuthenticated && !user)) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="h-8 w-8 rounded-full border-4 border-t-amber-500 border-r-amber-500 border-b-transparent border-l-transparent animate-spin"></div>
+          <p className="text-sm text-muted-foreground">
+            Restoring your session...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="h-8 w-8 rounded-full border-4 border-t-amber-500 border-r-amber-500 border-b-transparent border-l-transparent animate-spin"></div>
+          <p className="text-sm text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isOrganizer) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
         <h2 className="text-2xl font-bold text-destructive">Access Denied</h2>

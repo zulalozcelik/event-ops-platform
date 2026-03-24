@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { register } from '@/features/auth/auth.api';
+import {
+  getAuthErrorMessage,
+  register,
+} from '@/features/auth/auth.api';
+import {
+  registerFormSchema,
+  type RegisterFormValues,
+} from '@/features/auth/auth-form.schema';
 import { useAuthStore } from '@/store/auth-store';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,7 +18,7 @@ export function RegisterForm() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<RegisterFormValues>({
     name: '',
     email: '',
     password: '',
@@ -24,14 +31,26 @@ export function RegisterForm() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
+
+    const parsed = registerFormSchema.safeParse(form);
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? 'Register failed');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const data = await register(form);
+      const data = await register(parsed.data);
       setAuth(data.user);
-      router.push('/');
-    } catch {
-      setError('Register failed');
+      router.push(
+        data.user.role === 'ORGANIZER' || data.user.role === 'ADMIN'
+          ? '/dashboard'
+          : '/',
+      );
+    } catch (error) {
+      setError(getAuthErrorMessage(error, 'Register failed'));
     } finally {
       setIsLoading(false);
     }

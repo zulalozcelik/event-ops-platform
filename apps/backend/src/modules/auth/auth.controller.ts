@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { FastifyReply } from 'fastify';
+import type { CookieSerializeOptions } from '@fastify/cookie';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -21,8 +22,9 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '@/common/guards/jwt-auth.guard';
-import type { LoginDto } from './dto/login.dto';
-import type { RegisterDto } from './dto/register.dto';
+import { parseZodSchema } from '@/common/utils/parse-zod-schema';
+import { loginSchema, type LoginDto } from './dto/login.dto';
+import { registerSchema, type RegisterDto } from './dto/register.dto';
 
 type AuthenticatedRequest = {
   user: {
@@ -68,7 +70,8 @@ export class AuthController {
     @Body() body: RegisterDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
-    const result = await this.authService.register(body);
+    const dto = parseZodSchema(registerSchema, body);
+    const result = await this.authService.register(dto);
 
     this.setAuthCookie(res, result.accessToken);
 
@@ -102,7 +105,8 @@ export class AuthController {
     @Body() body: LoginDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
-    const result = await this.authService.login(body);
+    const dto = parseZodSchema(loginSchema, body);
+    const result = await this.authService.login(dto);
 
     this.setAuthCookie(res, result.accessToken);
 
@@ -119,9 +123,7 @@ export class AuthController {
   @ApiOkResponse({ description: 'Logged out successfully.' })
   @Post('logout')
   logout(@Res({ passthrough: true }) res: FastifyReply) {
-    res.clearCookie('access_token', {
-      path: '/',
-    });
+    res.clearCookie('access_token', this.getAuthCookieOptions());
 
     return {
       message: 'Logged out',
@@ -144,17 +146,20 @@ export class AuthController {
   }
 
   private setAuthCookie(res: FastifyReply, token: string) {
+    res.setCookie('access_token', token, this.getAuthCookieOptions());
+  }
+
+  private getAuthCookieOptions(): CookieSerializeOptions {
     const frontendUrl = this.configService.get<string>(
       'FRONTEND_URL',
       'http://localhost:3000',
     );
-    const shouldUseSecureCookie = frontendUrl.startsWith('https://');
 
-    res.setCookie('access_token', token, {
+    return {
       httpOnly: true,
-      secure: shouldUseSecureCookie,
+      secure: frontendUrl.startsWith('https://'),
       sameSite: 'lax',
       path: '/',
-    });
+    };
   }
 }

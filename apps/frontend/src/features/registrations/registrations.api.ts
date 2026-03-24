@@ -107,10 +107,11 @@ export const useMyRegistrations = () => {
   });
 };
 
-export const useDashboardSummary = () => {
+export const useDashboardSummary = (enabled = true) => {
   return useQuery({
     queryKey: ['dashboard', 'summary'],
     queryFn: fetchDashboardSummary,
+    enabled,
   });
 };
 

@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { login } from '@/features/auth/auth.api';
+import {
+  getAuthErrorMessage,
+  login,
+} from '@/features/auth/auth.api';
+import {
+  loginFormSchema,
+  type LoginFormValues,
+} from '@/features/auth/auth-form.schema';
 import { useAuthStore } from '@/store/auth-store';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,7 +18,7 @@ export function LoginForm() {
   const router = useRouter();
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<LoginFormValues>({
     email: '',
     password: '',
   });
@@ -22,14 +29,26 @@ export function LoginForm() {
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError('');
+
+    const parsed = loginFormSchema.safeParse(form);
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? 'Login failed');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const data = await login(form);
+      const data = await login(parsed.data);
       setAuth(data.user);
-      router.push('/');
-    } catch {
-      setError('Login failed');
+      router.push(
+        data.user.role === 'ORGANIZER' || data.user.role === 'ADMIN'
+          ? '/dashboard'
+          : '/',
+      );
+    } catch (error) {
+      setError(getAuthErrorMessage(error, 'Login failed'));
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { EventForm } from '@/features/events/components/event-form';
@@ -17,11 +17,37 @@ import { useAuthStore } from '@/store/auth-store';
 
 export default function CreateEventPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { initialized, isAuthenticated, user } = useAuthStore();
   const { mutate: createEvent, isPending, error } = useCreateEvent();
   const [formValues, setFormValues] = useState<EventFormValues>(
     createDefaultEventFormValues(),
   );
+
+  useEffect(() => {
+    if (initialized && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [initialized, isAuthenticated, router]);
+
+  if (!initialized || (isAuthenticated && !user)) {
+    return (
+      <div className="flex min-h-[50vh] w-full items-center justify-center">
+        <div className="rounded-xl border border-border bg-surface px-8 py-6 text-sm text-text-muted shadow-sm">
+          Restoring your session...
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex min-h-[50vh] w-full items-center justify-center">
+        <div className="rounded-xl border border-border bg-surface px-8 py-6 text-sm text-text-muted shadow-sm">
+          Redirecting to login...
+        </div>
+      </div>
+    );
+  }
 
   if (!user || (user.role !== 'ORGANIZER' && user.role !== 'ADMIN')) {
     return (

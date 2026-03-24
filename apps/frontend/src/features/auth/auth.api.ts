@@ -1,3 +1,4 @@
+import { isAxiosError } from 'axios';
 import { api } from '@/lib/api';
 import type { AuthResponse, AuthUser } from '@/types/auth';
 
@@ -30,4 +31,21 @@ export async function getMe() {
 
 export async function logout() {
   await api.post('/auth/logout');
+}
+
+export function getAuthErrorMessage(
+  error: unknown,
+  fallbackMessage: string,
+): string {
+  if (!isAxiosError<{ message?: string | string[] }>(error)) {
+    return fallbackMessage;
+  }
+
+  const message = error.response?.data?.message;
+
+  if (Array.isArray(message)) {
+    return message[0] ?? fallbackMessage;
+  }
+
+  return message ?? fallbackMessage;
 }
