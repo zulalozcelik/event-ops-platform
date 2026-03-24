@@ -144,12 +144,15 @@ export class AuthController {
   }
 
   private setAuthCookie(res: FastifyReply, token: string) {
-    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
-    const isProduction = nodeEnv === 'production';
+    const frontendUrl = this.configService.get<string>(
+      'FRONTEND_URL',
+      'http://localhost:3000',
+    );
+    const shouldUseSecureCookie = frontendUrl.startsWith('https://');
 
     res.setCookie('access_token', token, {
       httpOnly: true,
-      secure: isProduction,
+      secure: shouldUseSecureCookie,
       sameSite: 'lax',
       path: '/',
     });
