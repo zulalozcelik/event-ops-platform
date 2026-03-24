@@ -22,4 +22,4 @@ WORKDIR /app/apps/frontend
 
 EXPOSE 3000
 
-CMD ["pnpm", "start", "--", "--hostname", "0.0.0.0", "--port", "3000"]
+CMD ["pnpm", "exec", "next", "start", "--hostname", "0.0.0.0", "--port", "3000"]
