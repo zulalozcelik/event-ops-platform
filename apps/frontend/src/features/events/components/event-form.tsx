@@ -13,9 +13,7 @@ interface EventFormProps {
   isSubmitting: boolean;
   errorMessage?: string;
   onChange: (
-    event: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => void;
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
 }
@@ -124,40 +122,19 @@ export function EventForm({
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <label
-                htmlFor="capacity"
-                className="text-sm font-medium text-text"
-              >
-                Capacity
-              </label>
-              <Input
-                id="capacity"
-                name="capacity"
-                type="number"
-                min={1}
-                value={values.capacity}
-                onChange={onChange}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="status" className="text-sm font-medium text-text">
-                Status
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={values.status}
-                onChange={onChange}
-                className="flex h-9 w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <option value="DRAFT">Draft</option>
-                <option value="PUBLISHED">Published</option>
-              </select>
-            </div>
+          <div className="space-y-2">
+            <label htmlFor="capacity" className="text-sm font-medium text-text">
+              Capacity
+            </label>
+            <Input
+              id="capacity"
+              name="capacity"
+              type="number"
+              min={1}
+              value={values.capacity}
+              onChange={onChange}
+              required
+            />
           </div>
 
           {errorMessage ? (

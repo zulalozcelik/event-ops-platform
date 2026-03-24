@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { EventForm } from '@/features/events/components/event-form';
 import {
   getEventMutationErrorMessage,
+  useDeleteEvent,
   useEventDetail,
   useUpdateEvent,
 } from '@/features/events/events.api';
@@ -32,6 +33,11 @@ export default function EditEventPage({
     isPending,
     error: updateError,
   } = useUpdateEvent(id);
+  const {
+    mutate: deleteEvent,
+    isPending: isDeleting,
+    error: deleteError,
+  } = useDeleteEvent(id);
   const [formValues, setFormValues] = useState<EventFormValues | null>(null);
 
   const canEditEvent = useMemo(() => {
@@ -40,6 +46,14 @@ export default function EditEventPage({
     }
 
     return user.role === 'ADMIN' || user.id === event.organizerId;
+  }, [event, user]);
+
+  const canDeleteEvent = useMemo(() => {
+    if (!user || !event) {
+      return false;
+    }
+
+    return user.id === event.organizerId;
   }, [event, user]);
 
   useEffect(() => {
@@ -55,9 +69,7 @@ export default function EditEventPage({
   }, [initialized, router, user]);
 
   function handleChange(
-    currentEvent: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    currentEvent: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
     const { name, value } = currentEvent.target;
 
@@ -81,6 +93,22 @@ export default function EditEventPage({
     updateEvent(mapFormValuesToPayload(formValues), {
       onSuccess: () => {
         router.push(`/events/${id}?updated=1`);
+      },
+    });
+  }
+
+  function handleDelete() {
+    const isConfirmed = window.confirm(
+      'Delete this event? Registered attendees will be notified and the event will be removed from active lists.',
+    );
+
+    if (!isConfirmed) {
+      return;
+    }
+
+    deleteEvent(undefined, {
+      onSuccess: () => {
+        router.push('/dashboard?eventDeleted=1');
       },
     });
   }
@@ -148,13 +176,30 @@ export default function EditEventPage({
         description="Update event details here. Saving this form should create change history entries and attendee notifications."
         values={formValues}
         submitLabel="Save Changes"
-        isSubmitting={isPending}
+        isSubmitting={isPending || isDeleting}
         errorMessage={
-          updateError ? getEventMutationErrorMessage(updateError) : undefined
+          updateError
+            ? getEventMutationErrorMessage(updateError)
+            : deleteError
+              ? getEventMutationErrorMessage(deleteError)
+              : undefined
         }
         onChange={handleChange}
         onSubmit={handleSubmit}
       />
+
+      {canDeleteEvent ? (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending || isDeleting}
+            onClick={handleDelete}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete Event'}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

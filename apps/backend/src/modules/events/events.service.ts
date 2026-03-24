@@ -54,7 +54,7 @@ export class EventsService {
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
       organizerId: userId,
-      status: data.status || 'DRAFT',
+      status: 'PUBLISHED',
     });
   }
 
@@ -129,7 +129,7 @@ export class EventsService {
       : event.startDate;
     const mergedEndAt = data.endDate ? new Date(data.endDate) : event.endDate;
     const mergedCapacity = data.capacity ?? event.capacity;
-    const mergedStatus = data.status ?? event.status;
+    const mergedStatus = event.status === 'DRAFT' ? 'PUBLISHED' : event.status;
 
     const mergedEventSnapshot = buildEventComparableSnapshot({
       title: mergedTitle,
@@ -156,6 +156,7 @@ export class EventsService {
       ...data,
       startDate: data.startDate ? new Date(data.startDate) : undefined,
       endDate: data.endDate ? new Date(data.endDate) : undefined,
+      status: mergedStatus === event.status ? undefined : mergedStatus,
     };
 
     const updatedEvent = await this.eventRepository.update(id, updateData);
@@ -211,14 +212,14 @@ export class EventsService {
     return updatedEvent;
   }
 
-  async cancelEvent(
+  async deleteEvent(
     id: string,
     userId: string,
     userRole: string,
   ): Promise<Event> {
     if (userRole !== 'ADMIN' && userRole !== 'ORGANIZER') {
       throw new ForbiddenException(
-        'Only admins and organizers can cancel events',
+        'Only organizers can delete events',
       );
     }
 
@@ -227,11 +228,68 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
-    if (userRole !== 'ADMIN' && event.organizerId !== userId) {
-      throw new ForbiddenException('You can only cancel your own events');
+    if (event.organizerId !== userId) {
+      throw new ForbiddenException('You can only delete your own events');
     }
 
-    return this.eventRepository.cancel(id);
+    if (event.status === 'CANCELLED') {
+      return event;
+    }
+
+    const beforeSnapshot = buildEventComparableSnapshot({
+      title: event.title,
+      description: event.description || null,
+      location: event.location,
+      startAt: event.startDate,
+      endAt: event.endDate,
+      capacity: event.capacity,
+      status: event.status,
+    });
+
+    const afterSnapshot = buildEventComparableSnapshot({
+      title: event.title,
+      description: event.description || null,
+      location: event.location,
+      startAt: event.startDate,
+      endAt: event.endDate,
+      capacity: event.capacity,
+      status: 'CANCELLED',
+    });
+
+    const changedFields = calculateChangedFields(beforeSnapshot, afterSnapshot);
+
+    const attendeeUsers =
+      await this.registrationsService.getAttendeeUserIdsForEvent(id);
+
+    const deletedEvent = await this.eventRepository.cancel(id);
+
+    const createdLog = await this.eventChangeLogsService.createLog({
+      eventId: event.id,
+      changedByUserId: userId,
+      beforeData: beforeSnapshot,
+      afterData: afterSnapshot,
+      changedFields,
+      notificationCreated: false,
+    });
+
+    const attendeeNotifications = attendeeUsers
+      .filter((attendee) => attendee.userId !== userId)
+      .map((attendee) => ({
+        userId: attendee.userId,
+        eventId: event.id,
+        type: 'EVENT_DELETED',
+        title: 'Event cancelled',
+        message: `${event.title} was cancelled by the organizer.`,
+      }));
+
+    if (attendeeNotifications.length > 0) {
+      await this.notificationsService.createManyNotifications(
+        attendeeNotifications,
+      );
+      await this.eventChangeLogsService.markNotificationCreated(createdLog.id);
+    }
+
+    return deletedEvent;
   }
 
   async getEventsCount(organizerId: string): Promise<number> {

@@ -7,7 +7,6 @@ export const createEventSchema = z.object({
   startDate: z.string().datetime(),
   endDate: z.string().datetime(),
   capacity: z.number().int().min(1),
-  status: z.enum(['DRAFT', 'PUBLISHED', 'CANCELLED']).optional(),
 });
 
 export type CreateEventDto = z.infer<typeof createEventSchema>;

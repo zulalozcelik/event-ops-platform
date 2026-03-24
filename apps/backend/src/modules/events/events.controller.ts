@@ -70,11 +70,6 @@ export class EventsController {
           example: '2026-04-10T20:00:00.000Z',
         },
         capacity: { type: 'integer', example: 100 },
-        status: {
-          type: 'string',
-          enum: ['DRAFT', 'PUBLISHED', 'CANCELLED'],
-          example: 'PUBLISHED',
-        },
       },
     },
   })
@@ -135,11 +130,6 @@ export class EventsController {
           example: '2026-04-10T21:00:00.000Z',
         },
         capacity: { type: 'integer', example: 120 },
-        status: {
-          type: 'string',
-          enum: ['DRAFT', 'PUBLISHED', 'CANCELLED'],
-          example: 'PUBLISHED',
-        },
       },
     },
   })
@@ -158,14 +148,15 @@ export class EventsController {
   @ApiBearerAuth('bearer')
   @ApiCookieAuth('access_token')
   @ApiOperation({
-    summary: 'Cancel event',
-    description: 'Cancels an event owned by the organizer or admin.',
+    summary: 'Delete event',
+    description:
+      'Soft deletes an event owned by the organizer or admin by marking it as cancelled.',
   })
-  @ApiOkResponse({ description: 'Event cancelled successfully.' })
+  @ApiOkResponse({ description: 'Event deleted successfully.' })
   @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
-  async cancelEvent(@Param('id') id: string, @Req() req: RequestWithUser) {
-    return this.eventsService.cancelEvent(id, req.user.id, req.user.role);
+  async deleteEvent(@Param('id') id: string, @Req() req: RequestWithUser) {
+    return this.eventsService.deleteEvent(id, req.user.id, req.user.role);
   }
 }

@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { getMe } from '@/features/auth/auth.api';
+import {
+  ExpectedAuthError,
+  getMe,
+} from '@/features/auth/auth.api';
+import { hasAuthSessionHint } from '@/features/auth/auth-session';
 import { useAuthStore } from '@/store/auth-store';
 
 export const useAuthBootstrap = () => {
@@ -11,10 +15,20 @@ export const useAuthBootstrap = () => {
     if (initialized) return;
 
     const bootstrap = async () => {
+      if (!hasAuthSessionHint()) {
+        clearAuth();
+        setInitialized();
+        return;
+      }
+
       try {
         const user = await getMe();
         setAuth(user);
-      } catch {
+      } catch (error) {
+        if (!(error instanceof ExpectedAuthError)) {
+          console.error('Auth bootstrap failed', error);
+        }
+
         clearAuth();
       } finally {
         setInitialized();

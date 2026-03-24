@@ -68,7 +68,6 @@ export interface CreateEventInput {
   startDate: string;
   endDate: string;
   capacity: number;
-  status?: EventStatus;
 }
 
 export type UpdateEventInput = CreateEventInput;
@@ -99,6 +98,11 @@ export const updateEvent = async (
   input: UpdateEventInput,
 ): Promise<Event> => {
   const { data } = await api.patch(`/events/${id}`, input);
+  return data;
+};
+
+export const deleteEvent = async (id: string): Promise<Event> => {
+  const { data } = await api.delete(`/events/${id}`);
   return data;
 };
 
@@ -160,6 +164,23 @@ export const useUpdateEvent = (id: string) => {
             }
           : undefined,
       );
+    },
+  });
+};
+
+export const useDeleteEvent = (id: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => deleteEvent(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['events', id] });
+      queryClient.invalidateQueries({
+        queryKey: ['events', id, 'change-logs'],
+      });
+      queryClient.invalidateQueries({ queryKey: ['notifications', 'my'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 };

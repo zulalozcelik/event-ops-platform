@@ -14,6 +14,13 @@ export type LoginInput = {
   password: string;
 };
 
+export class ExpectedAuthError extends Error {
+  constructor() {
+    super('Expected anonymous auth state');
+    this.name = 'ExpectedAuthError';
+  }
+}
+
 export async function register(input: RegisterInput) {
   const response = await api.post<AuthResponse>('/auth/register', input);
   return response.data;
@@ -25,8 +32,16 @@ export async function login(input: LoginInput) {
 }
 
 export async function getMe() {
-  const response = await api.get<AuthUser>('/auth/me');
-  return response.data;
+  try {
+    const response = await api.get<AuthUser>('/auth/me');
+    return response.data;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 401) {
+      throw new ExpectedAuthError();
+    }
+
+    throw error;
+  }
 }
 
 export async function logout() {

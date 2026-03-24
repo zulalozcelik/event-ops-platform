@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 import type { AuthUser } from '@/types/auth';
+import {
+  clearAuthSessionHint,
+  setAuthSessionHint,
+} from '@/features/auth/auth-session';
 
 type AuthState = {
   user: AuthUser | null;
@@ -16,15 +20,23 @@ export const useAuthStore = create<AuthState>()((set) => ({
   initialized: false,
 
   setAuth: (user) =>
-    set({
-      user,
-      isAuthenticated: true,
+    set(() => {
+      setAuthSessionHint();
+
+      return {
+        user,
+        isAuthenticated: true,
+      };
     }),
 
   clearAuth: () =>
-    set({
-      user: null,
-      isAuthenticated: false,
+    set(() => {
+      clearAuthSessionHint();
+
+      return {
+        user: null,
+        isAuthenticated: false,
+      };
     }),
 
   setInitialized: () =>

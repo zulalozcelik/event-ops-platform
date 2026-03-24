@@ -1,4 +1,4 @@
-import type { CreateEventInput, Event, EventStatus } from './events.api';
+import type { CreateEventInput, Event } from './events.api';
 
 export interface EventFormValues {
   title: string;
@@ -7,7 +7,6 @@ export interface EventFormValues {
   startDate: string;
   endDate: string;
   capacity: number;
-  status: Exclude<EventStatus, 'CANCELLED'>;
 }
 
 export function createDefaultEventFormValues(): EventFormValues {
@@ -18,7 +17,6 @@ export function createDefaultEventFormValues(): EventFormValues {
     startDate: '',
     endDate: '',
     capacity: 100,
-    status: 'PUBLISHED',
   };
 }
 
@@ -41,7 +39,6 @@ export function mapEventToFormValues(event: Event): EventFormValues {
     startDate: toDateTimeLocal(event.startDate),
     endDate: toDateTimeLocal(event.endDate),
     capacity: event.capacity,
-    status: event.status === 'DRAFT' ? 'DRAFT' : 'PUBLISHED',
   };
 }
 

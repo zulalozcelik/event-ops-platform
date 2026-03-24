@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  loginPasswordSchema,
+  registerPasswordSchema,
+} from './auth-password.schema';
 
 export const loginFormSchema = z.object({
   email: z
@@ -6,14 +10,7 @@ export const loginFormSchema = z.object({
     .trim()
     .min(1, 'Email is required')
     .email('Please enter a valid email address'),
-  password: z
-    .string()
-    .refine((value) => value.trim().length > 0, {
-      message: 'Password is required',
-    })
-    .refine((value) => value.trim().length >= 6, {
-      message: 'Password must be at least 6 characters',
-    }),
+  password: loginPasswordSchema,
 });
 
 export const registerFormSchema = z.object({
@@ -27,14 +24,7 @@ export const registerFormSchema = z.object({
     .trim()
     .min(1, 'Email is required')
     .email('Please enter a valid email address'),
-  password: z
-    .string()
-    .refine((value) => value.trim().length > 0, {
-      message: 'Password is required',
-    })
-    .refine((value) => value.trim().length >= 6, {
-      message: 'Password must be at least 6 characters',
-    }),
+  password: registerPasswordSchema,
   role: z.enum(['ATTENDEE', 'ORGANIZER']),
 });
 
