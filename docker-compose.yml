@@ -36,11 +36,11 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:3001/api
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     container_name: event_ops_frontend
     restart: unless-stopped
-    env_file:
-      - ./apps/frontend/.env.docker
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     depends_on:
       - backend
     ports:
