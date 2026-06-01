@@ -1,143 +1,137 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarDaysIcon, LayoutDashboardIcon, BellIcon } from 'lucide-react';
+import { CalendarDaysIcon, HistoryIcon, UsersIcon } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth-store';
 
 export default function HomePage() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   return (
-    <div className="grid w-full gap-6 lg:grid-cols-[minmax(0,1.4fr)_360px]">
-      <section className="space-y-6">
-        <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm md:p-8">
-          <p className="text-xs uppercase tracking-[0.18em] text-accent">
-            Event operations workspace
-          </p>
-          <h1 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight text-text md:text-5xl">
-            Create events, manage changes, and track attendee activity in one
-            place.
+    <div className="w-full space-y-10">
+      <section className="grid items-start gap-8 py-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="max-w-3xl">
+          <Badge variant="slate" className="mb-4">
+            Event Ops Platform
+          </Badge>
+          <h1 className="font-display text-4xl font-bold leading-tight text-text md:text-[36px]">
+            Manage campus events with less confusion.
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-text-muted">
-            A focused MVP for organizers who need registrations, change history,
-            and notification visibility without extra setup.
+          <p className="mt-4 max-w-2xl text-base leading-7 text-text-muted">
+            Create events, track registrations, manage waitlists, and keep
+            event updates visible for attendees.
           </p>
-
           <div className="mt-6 flex flex-wrap gap-3">
-            {isAuthenticated ? (
-              <>
-                <Link href="/dashboard">
-                  <Button>Open dashboard</Button>
-                </Link>
-                <Link href="/events">
-                  <Button variant="outline">Browse events</Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/register">
-                  <Button>Create organizer account</Button>
-                </Link>
-                <Link href="/login">
-                  <Button variant="outline">Sign in</Button>
-                </Link>
-              </>
-            )}
+            <Link href="/events">
+              <Button>Browse events</Button>
+            </Link>
+            <Link href={isAuthenticated ? '/dashboard' : '/register'}>
+              <Button variant="outline">
+                {isAuthenticated ? 'Go to dashboard' : 'Create account'}
+              </Button>
+            </Link>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            <CalendarDaysIcon className="h-5 w-5 text-accent" />
-            <p className="mt-4 text-sm font-semibold text-text">
-              Event planning
-            </p>
-            <p className="mt-2 text-sm text-text-muted">
-              Create and update event details from one organizer flow.
-            </p>
+        <aside className="rounded-xl border border-border bg-surface p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-text">
+                Workshop Planning Session
+              </p>
+              <p className="mt-1 text-sm text-text-muted">
+                Main campus, Room B
+              </p>
+            </div>
+            <Badge variant="success">Published</Badge>
           </div>
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            <BellIcon className="h-5 w-5 text-accent" />
-            <p className="mt-4 text-sm font-semibold text-text">
-              Notification testing
-            </p>
-            <p className="mt-2 text-sm text-text-muted">
-              Verify that attendee notifications are generated after event
-              edits.
-            </p>
-          </div>
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            <LayoutDashboardIcon className="h-5 w-5 text-accent" />
-            <p className="mt-4 text-sm font-semibold text-text">
-              Organizer overview
-            </p>
-            <p className="mt-2 text-sm text-text-muted">
-              Review registrations, upcoming events, and recent activity.
-            </p>
-          </div>
-        </div>
+          <dl className="mt-6 grid gap-3 text-sm">
+            <div className="flex items-center justify-between border-t border-border pt-3">
+              <dt className="text-text-muted">Capacity</dt>
+              <dd className="font-medium text-text">24 of 40</dd>
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-3">
+              <dt className="text-text-muted">Waitlist</dt>
+              <dd className="font-medium text-text">3 people</dd>
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-3">
+              <dt className="text-text-muted">Last update</dt>
+              <dd className="font-medium text-text">Room changed</dd>
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-3">
+              <dt className="text-text-muted">Notification</dt>
+              <dd className="font-medium text-text">Sent</dd>
+            </div>
+          </dl>
+        </aside>
       </section>
 
-      <aside className="space-y-4">
-        <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-text-muted">
-            Snapshot
-          </p>
-          <div className="mt-4 grid gap-3">
-            <div className="rounded-xl bg-surface-muted/40 p-4">
-              <p className="text-xs text-text-muted">What you can test</p>
-              <p className="mt-1 text-lg font-semibold text-text">
-                Edit {'->'} Change log {'->'} Notification
-              </p>
-            </div>
-            <div className="rounded-xl bg-surface-muted/40 p-4">
-              <p className="text-xs text-text-muted">Best demo flow</p>
-              <p className="mt-1 text-sm text-text">
-                Organizer updates event, attendee checks notifications.
-              </p>
-            </div>
-            {isAuthenticated && user ? (
-              <div className="rounded-xl border border-border p-4 text-sm text-text-muted">
-                Signed in as{' '}
-                <span className="font-medium text-text">{user.name}</span>.
-                {user.role === 'ORGANIZER' || user.role === 'ADMIN'
-                  ? ' Start from the dashboard or edit one of your events.'
-                  : ' Open Events or Notifications to test attendee flows.'}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-dashed border-border p-4 text-sm text-text-muted">
-                Sign in as organizer to edit an event, then switch to an
-                attendee account to verify notifications.
-              </div>
-            )}
-          </div>
-        </div>
+      <section className="grid gap-4 md:grid-cols-3">
+        {[
+          {
+            icon: CalendarDaysIcon,
+            title: 'Event management',
+            text: 'Create, edit, and organize events without changing backend workflows.',
+          },
+          {
+            icon: UsersIcon,
+            title: 'Registration tracking',
+            text: 'Show attendees, remaining capacity, and waitlist state in one place.',
+          },
+          {
+            icon: HistoryIcon,
+            title: 'Change history',
+            text: 'Keep a readable record of updates for the graduation presentation.',
+          },
+        ].map((feature) => (
+          <article
+            key={feature.title}
+            className="rounded-xl border border-border bg-surface p-6"
+          >
+            <feature.icon className="h-5 w-5 text-accent" />
+            <h2 className="mt-4 font-display text-lg font-semibold text-text">
+              {feature.title}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-text-muted">
+              {feature.text}
+            </p>
+          </article>
+        ))}
+      </section>
 
-        <div className="rounded-2xl border border-border bg-surface p-5 shadow-sm">
-          <p className="text-sm font-semibold text-text">Quick links</p>
-          <div className="mt-4 grid gap-2">
-            <Link
-              href="/events"
-              className="rounded-lg border border-border px-3 py-3 text-sm text-text transition-colors hover:bg-surface-muted/40"
-            >
-              Browse events
-            </Link>
-            <Link
-              href="/notifications"
-              className="rounded-lg border border-border px-3 py-3 text-sm text-text transition-colors hover:bg-surface-muted/40"
-            >
-              Open notifications
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-lg border border-border px-3 py-3 text-sm text-text transition-colors hover:bg-surface-muted/40"
-            >
-              Organizer dashboard
-            </Link>
+      <section className="rounded-xl border border-border bg-surface p-6 md:p-8">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_320px]">
+          <div>
+            <Badge variant="info">Data integrity</Badge>
+            <h2 className="mt-4 font-display text-2xl font-semibold text-text">
+              Every event change is recorded.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-text-muted">
+              When an organizer edits an event, the system stores the change
+              and notifies registered attendees.
+            </p>
           </div>
+          <ol className="space-y-3 text-sm text-text">
+            {[
+              'Organizer updates event',
+              'Change log is saved',
+              'Attendees receive notification',
+            ].map((item, index) => (
+              <li
+                key={item}
+                className="flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface-muted text-xs font-semibold text-text">
+                  {index + 1}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ol>
         </div>
-      </aside>
+      </section>
     </div>
   );
 }

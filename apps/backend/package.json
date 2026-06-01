@@ -10,7 +10,8 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "ts-node -r tsconfig-paths/register src/core/database/seed.ts"
   },
   "dependencies": {
     "@event-ops/shared": "workspace:*",

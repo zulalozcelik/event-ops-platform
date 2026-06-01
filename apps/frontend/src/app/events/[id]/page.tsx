@@ -11,12 +11,14 @@ import {
   CheckCircle2Icon,
   BellIcon,
   Clock3Icon,
+  HistoryIcon,
   MapPinIcon,
   PencilLineIcon,
   UsersIcon,
   XCircleIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   useEventChangeLogs,
   useEventDetail,
@@ -48,6 +50,18 @@ const changeFieldLabels: Record<string, string> = {
   capacity: 'Capacity',
   status: 'Status',
 };
+
+function getEventStatusVariant(status: string) {
+  if (status === 'PUBLISHED') {
+    return 'success' as const;
+  }
+
+  if (status === 'DRAFT') {
+    return 'slate' as const;
+  }
+
+  return 'danger' as const;
+}
 
 function getActionErrorMessage(error: unknown): string {
   if (!isAxiosError<ApiErrorResponse>(error)) {
@@ -250,7 +264,7 @@ export default function EventDetailPage({
           <ArrowLeftIcon className="mr-2 h-4 w-4" />
           Back to Events
         </Link>
-        <div className="rounded-xl border border-border bg-surface p-5 text-sm text-destructive shadow-sm">
+        <div className="rounded-xl border border-border bg-surface p-6 text-sm text-destructive shadow-sm">
           Failed to load event or event not found.
         </div>
       </div>
@@ -260,14 +274,7 @@ export default function EventDetailPage({
   const isOrganizer = user?.id === event.organizerId;
   const wasUpdated = searchParams.get('updated') === '1';
   const isFull = event.remainingCapacity === 0;
-  const changeEntries = changeLogs?.flatMap((log) =>
-    Object.entries(log.changedFields).map(([field, detail]) => ({
-      id: `${log.id}-${field}`,
-      field,
-      detail,
-      createdAt: log.createdAt,
-    })),
-  );
+  const hasChangeLogs = Boolean(changeLogs && changeLogs.length > 0);
 
   const renderRegistrationAction = () => {
     if (isOrganizer) {
@@ -280,7 +287,7 @@ export default function EventDetailPage({
 
     if (event.status === 'CANCELLED') {
       return (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+        <div className="rounded-lg border border-[#EDC0B6] bg-destructive-muted px-4 py-4 text-sm text-destructive">
           This event has been cancelled.
         </div>
       );
@@ -347,7 +354,7 @@ export default function EventDetailPage({
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 pb-10">
       {wasUpdated ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-xl border border-[#C8D3B1] bg-[#E5EBD9] px-4 py-3 text-sm text-success">
           Event updated successfully. Change history is listed below for quick
           verification.
         </div>
@@ -361,24 +368,17 @@ export default function EventDetailPage({
         Back to Events
       </Link>
 
-      <article className="overflow-hidden rounded-2xl border border-border bg-surface shadow-sm">
+      <article className="overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
         <div className="border-b border-border px-6 py-6 md:px-8">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                  event.status === 'PUBLISHED'
-                    ? 'bg-emerald-50 text-emerald-700'
-                    : event.status === 'DRAFT'
-                      ? 'bg-amber-50 text-amber-700'
-                      : 'bg-red-50 text-red-700'
-                }`}
-              >
+              <Badge variant={getEventStatusVariant(event.status)}>
                 {event.status}
-              </span>
-              <span className="text-sm text-text-muted">
-                Current state: {event.currentUserRegistrationState}
-              </span>
+              </Badge>
+              {isFull ? <Badge variant="warning">FULL</Badge> : null}
+              {event.waitlistCount > 0 ? (
+                <Badge variant="warning">WAITLIST {event.waitlistCount}</Badge>
+              ) : null}
             </div>
 
             {canManageEvent ? (
@@ -395,30 +395,36 @@ export default function EventDetailPage({
                     Notifications
                   </Button>
                 </Link>
+                <a href="#change-history">
+                  <Button variant="ghost" className="gap-2">
+                    <HistoryIcon className="h-4 w-4" />
+                    Change logs
+                  </Button>
+                </a>
               </div>
             ) : null}
           </div>
 
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-text md:text-4xl">
+          <h1 className="mt-4 text-3xl font-semibold text-text md:text-4xl">
             {event.title}
           </h1>
 
           <div className="mt-6 grid gap-3 text-sm text-text-muted md:grid-cols-4">
-            <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-3">
+            <div className="flex items-center gap-2 rounded-xl bg-surface-muted px-3 py-3">
               <CalendarIcon className="h-4 w-4 text-accent" />
               <span>
                 {formatDate(event.startDate)} - {formatDate(event.endDate)}
               </span>
             </div>
-            <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-3">
+            <div className="flex items-center gap-2 rounded-xl bg-surface-muted px-3 py-3">
               <MapPinIcon className="h-4 w-4 text-accent" />
               <span>{event.location}</span>
             </div>
-            <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-3">
+            <div className="flex items-center gap-2 rounded-xl bg-surface-muted px-3 py-3">
               <UsersIcon className="h-4 w-4 text-accent" />
               <span>{event.registeredCount} registered</span>
             </div>
-            <div className="flex items-center gap-2 rounded-lg bg-surface-muted px-3 py-3">
+            <div className="flex items-center gap-2 rounded-xl bg-surface-muted px-3 py-3">
               <Clock3Icon className="h-4 w-4 text-accent" />
               <span>{event.remainingCapacity} spots left</span>
             </div>
@@ -427,7 +433,7 @@ export default function EventDetailPage({
 
         <div className="grid gap-6 px-6 py-6 md:grid-cols-[minmax(0,1fr)_320px] md:px-8">
           <section className="space-y-4">
-            <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="rounded-xl border border-border bg-surface p-6">
               <h2 className="text-lg font-semibold text-text">
                 About this event
               </h2>
@@ -437,7 +443,7 @@ export default function EventDetailPage({
             </div>
 
             {canManageEvent ? (
-              <div className="rounded-xl border border-border bg-surface-muted/40 p-5">
+              <div className="rounded-xl border border-[#D2B59D] bg-[#F3E4D5] p-6">
                 <h2 className="text-base font-semibold text-text">
                   Organizer workflow
                 </h2>
@@ -462,15 +468,18 @@ export default function EventDetailPage({
           </section>
 
           <aside className="space-y-4">
-            <div className="rounded-xl border border-border bg-surface-muted/40 p-5">
-              <h2 className="text-base font-semibold text-text">
-                Registration
-              </h2>
+            <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-base font-semibold text-text">
+                  Registration
+                </h2>
+                <Badge variant="slate">{event.currentUserRegistrationState}</Badge>
+              </div>
               <p className="mt-2 text-sm text-text-muted">
                 Capacity changes are updated in real time for this event.
               </p>
 
-              <div className="mt-5 space-y-3 rounded-lg border border-border bg-surface px-4 py-4 text-sm text-text-muted">
+              <div className="mt-6 space-y-3 rounded-xl border border-border bg-surface-muted px-4 py-4 text-sm text-text-muted">
                 <div className="flex items-center justify-between">
                   <span>Registered</span>
                   <span className="font-medium text-text">
@@ -491,17 +500,17 @@ export default function EventDetailPage({
                 </div>
               </div>
 
-              <div className="mt-5">{renderRegistrationAction()}</div>
+              <div className="mt-6">{renderRegistrationAction()}</div>
 
               {actionErrorMessage ? (
-                <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-[#EDC0B6] bg-destructive-muted px-4 py-3 text-sm text-destructive">
                   <XCircleIcon className="h-4 w-4" />
                   <span>{actionErrorMessage}</span>
                 </div>
               ) : null}
 
               {feedback?.type === 'success' ? (
-                <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                <div className="mt-3 flex items-center gap-2 rounded-lg border border-[#C8D3B1] bg-[#E5EBD9] px-4 py-3 text-sm text-success">
                   <CheckCircle2Icon className="h-4 w-4" />
                   <span>{feedback.message}</span>
                 </div>
@@ -512,15 +521,18 @@ export default function EventDetailPage({
       </article>
 
       {canManageEvent ? (
-        <section className="rounded-2xl border border-border bg-surface shadow-sm">
+        <section
+          id="change-history"
+          className="rounded-xl border border-border bg-surface shadow-sm"
+        >
           <div className="border-b border-border px-6 py-4">
             <h2 className="text-lg font-semibold text-text">Change History</h2>
             <p className="mt-1 text-sm text-text-muted">
-              Recent updates made to this event.
+              Timeline of saved updates and notification creation.
             </p>
           </div>
 
-          <div className="px-6 py-5">
+          <div className="px-6 py-6">
             {isChangeLogsLoading ? (
               <p className="text-sm text-text-muted">
                 Loading change history...
@@ -529,31 +541,58 @@ export default function EventDetailPage({
               <p className="text-sm text-destructive">
                 Change history could not be loaded.
               </p>
-            ) : !changeEntries || changeEntries.length === 0 ? (
+            ) : !hasChangeLogs ? (
               <div className="rounded-xl border border-dashed border-border bg-surface-muted/50 px-4 py-8 text-center text-sm text-text-muted">
                 No event updates have been recorded yet.
               </div>
             ) : (
-              <div className="space-y-3">
-                {changeEntries.map(({ id, field, detail, createdAt }) => (
-                  <div
-                    key={id}
-                    className="rounded-xl border border-border bg-surface-muted/40 px-4 py-4"
-                  >
-                    <p className="text-sm font-medium text-text">
-                      {changeFieldLabels[field] ?? field}:{' '}
-                      <span className="font-normal text-text-muted">
-                        {formatChangedValue(field, detail.before)}
-                      </span>
-                      <span className="px-2 text-text-muted">-&gt;</span>
-                      <span className="font-normal text-text">
-                        {formatChangedValue(field, detail.after)}
-                      </span>
-                    </p>
-                    <p className="mt-1 text-xs text-text-muted">
-                      {formatDateTime(createdAt)}
-                    </p>
-                  </div>
+              <div className="space-y-4">
+                {changeLogs?.map((log) => (
+                  <article key={log.id} className="rounded-xl border border-border bg-surface p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-text">
+                          Event update recorded
+                        </p>
+                        <p className="mt-1 text-xs text-text-muted">
+                          {formatDateTime(log.createdAt)}
+                        </p>
+                      </div>
+                      <Badge variant={log.notificationCreated ? 'success' : 'slate'}>
+                        {log.notificationCreated
+                          ? 'Notification created'
+                          : 'No notification'}
+                      </Badge>
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      {Object.entries(log.changedFields).map(([field, detail]) => (
+                        <div
+                          key={`${log.id}-${field}`}
+                          className="grid gap-3 rounded-xl bg-surface-muted p-3 text-sm md:grid-cols-[160px_minmax(0,1fr)_minmax(0,1fr)]"
+                        >
+                          <div className="font-medium text-text">
+                            {changeFieldLabels[field] ?? field}
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                              Before
+                            </p>
+                            <p className="mt-1 break-words text-text-muted">
+                              {formatChangedValue(field, detail.before)}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+                              After
+                            </p>
+                            <p className="mt-1 break-words font-medium text-text">
+                              {formatChangedValue(field, detail.after)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
                 ))}
               </div>
             )}

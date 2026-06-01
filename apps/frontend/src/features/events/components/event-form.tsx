@@ -3,9 +3,11 @@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import type { EventFormValues } from '../event-form.types';
 
 interface EventFormProps {
+  mode: 'create' | 'edit';
   title: string;
   description?: string;
   values: EventFormValues;
@@ -19,6 +21,7 @@ interface EventFormProps {
 }
 
 export function EventForm({
+  mode,
   title,
   description,
   values,
@@ -28,12 +31,20 @@ export function EventForm({
   onChange,
   onSubmit,
 }: EventFormProps) {
+  const modeLabel = mode === 'create' ? 'Create flow' : 'Edit flow';
+  const pendingLabel = mode === 'create' ? 'Creating...' : 'Saving...';
+
   return (
     <Card className="border-border bg-surface">
-      <CardHeader className="space-y-1 border-border">
+      <CardHeader className="space-y-3 border-border">
+        <Badge variant="slate" className="w-fit">
+          {modeLabel}
+        </Badge>
         <CardTitle className="text-2xl text-text">{title}</CardTitle>
         {description ? (
-          <p className="text-sm text-text-muted">{description}</p>
+          <p className="max-w-2xl text-sm leading-6 text-text-muted">
+            {description}
+          </p>
         ) : null}
       </CardHeader>
 
@@ -67,7 +78,7 @@ export function EventForm({
               onChange={onChange}
               rows={5}
               required
-              className="flex w-full rounded-md border border-border bg-surface px-3 py-2 text-sm text-text shadow-sm placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="flex w-full rounded-lg border border-border bg-surface px-3.5 py-3 text-sm text-text placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
               placeholder="What should attendees know before joining?"
             />
           </div>
@@ -138,14 +149,14 @@ export function EventForm({
           </div>
 
           {errorMessage ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-lg border border-[#EDC0B6] bg-destructive-muted px-4 py-3 text-sm text-destructive">
               {errorMessage}
             </div>
           ) : null}
 
-          <div className="flex justify-end">
+          <div className="flex justify-end border-t border-border pt-6">
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : submitLabel}
+              {isSubmitting ? pendingLabel : submitLabel}
             </Button>
           </div>
         </form>

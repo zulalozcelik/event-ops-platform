@@ -11,7 +11,9 @@ export function setAuthSessionHint(): void {
 
   try {
     window.localStorage.setItem(AUTH_SESSION_HINT_KEY, 'true');
-  } catch {}
+  } catch {
+    return;
+  }
 }
 
 export function clearAuthSessionHint(): void {
@@ -21,7 +23,9 @@ export function clearAuthSessionHint(): void {
 
   try {
     window.localStorage.removeItem(AUTH_SESSION_HINT_KEY);
-  } catch {}
+  } catch {
+    return;
+  }
 }
 
 export function hasAuthSessionHint(): boolean {

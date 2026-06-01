@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EventCapacityGateway, EVENT_CAPACITY_UPDATED_EVENT } from './event-capacity.gateway';
+import { EventCapacityGateway, EVENT_CAPACITY_UPDATED_EVENT } from '../realtime/event-capacity.gateway';
 import type { EventCapacitySummary } from '@/modules/registrations/types/registration-flow.type';
 
 @Injectable()

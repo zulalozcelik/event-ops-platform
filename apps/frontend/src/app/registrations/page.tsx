@@ -1,9 +1,16 @@
 'use client';
 
 import Link from 'next/link';
-import { CalendarIcon, ListOrderedIcon, MapPinIcon, TicketIcon } from 'lucide-react';
+import {
+  CalendarIcon,
+  ListOrderedIcon,
+  MapPinIcon,
+  TicketIcon,
+} from 'lucide-react';
 import { useMyRegistrations } from '@/features/registrations/registrations.api';
 import { useAuthStore } from '@/store/auth-store';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 export default function MyRegistrationsPage() {
   const { user } = useAuthStore();
@@ -15,11 +22,8 @@ export default function MyRegistrationsPage() {
         <h2 className="text-2xl font-bold">
           Please log in to view your registrations.
         </h2>
-        <Link
-          href="/login"
-          className="font-medium text-amber-500 hover:text-amber-400"
-        >
-          Go to Login
+        <Link href="/login">
+          <Button>Go to Login</Button>
         </Link>
       </div>
     );
@@ -27,12 +31,12 @@ export default function MyRegistrationsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="flex animate-pulse flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-r-amber-500 border-t-amber-500 border-b-transparent border-l-transparent"></div>
-          <p className="text-sm text-muted-foreground">
-            Loading your registrations...
-          </p>
+      <div className="w-full space-y-6">
+        <div className="h-24 rounded-xl border border-border bg-surface shadow-sm" />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="h-56 rounded-xl border border-border bg-surface shadow-sm" />
+          <div className="h-56 rounded-xl border border-border bg-surface shadow-sm" />
+          <div className="h-56 rounded-xl border border-border bg-surface shadow-sm" />
         </div>
       </div>
     );
@@ -40,22 +44,28 @@ export default function MyRegistrationsPage() {
 
   if (error) {
     return (
-      <div className="rounded-md bg-destructive/15 p-4 text-sm font-medium text-destructive">
+      <div className="rounded-md border border-[#EDC0B6] bg-destructive-muted p-4 text-sm font-medium text-destructive">
         Failed to load your registrations.
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+    <div className="w-full space-y-6">
+      <div>
+        <Badge variant="default" className="mb-3">
+          Attendee workspace
+        </Badge>
+        <h1 className="text-3xl font-semibold text-foreground">
           My Registrations
         </h1>
+        <p className="mt-2 text-sm text-text-muted">
+          Track confirmed events and waitlist positions from one place.
+        </p>
       </div>
 
       {!registrations || registrations.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
+        <div className="rounded-xl border border-dashed border-border bg-surface p-12 text-center shadow-sm">
           <TicketIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">
             No registrations found
@@ -63,34 +73,25 @@ export default function MyRegistrationsPage() {
           <p className="mt-2 mb-6 text-sm text-muted-foreground">
             You have not joined any events or waitlists yet.
           </p>
-          <Link
-            href="/events"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-8 text-sm font-medium text-foreground transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-          >
-            Browse Events
+          <Link href="/events">
+            <Button variant="outline">Browse Events</Button>
           </Link>
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {registrations.map(({ id, state, createdAt, event }) => (
             <Link key={id} href={`/events/${event.id}`}>
-              <div className="group relative flex h-full cursor-pointer flex-col justify-between overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:border-amber-500/50 hover:shadow-md">
+              <div className="group flex h-full cursor-pointer flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-accent">
                 <div>
                   <div className="mb-4 flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-medium text-slate-300">
+                    <Badge variant="slate">
                       Entry #{id.substring(0, 8)}
-                    </span>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider ${
-                        state === 'REGISTERED'
-                          ? 'bg-emerald-500/10 text-emerald-500'
-                          : 'bg-amber-500/10 text-amber-500'
-                      }`}
-                    >
+                    </Badge>
+                    <Badge variant={state === 'REGISTERED' ? 'success' : 'warning'}>
                       {state}
-                    </span>
+                    </Badge>
                   </div>
-                  <h3 className="mb-2 text-xl font-bold tracking-tight text-foreground transition-colors group-hover:text-amber-500">
+                  <h3 className="mb-2 text-xl font-semibold text-foreground transition-colors group-hover:text-accent">
                     {event.title}
                   </h3>
                 </div>

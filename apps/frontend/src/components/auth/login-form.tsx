@@ -2,10 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  getAuthErrorMessage,
-  login,
-} from '@/features/auth/auth.api';
+import { getAuthErrorMessage, login } from '@/features/auth/auth.api';
 import {
   loginFormSchema,
   type LoginFormValues,
@@ -55,10 +52,13 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-text-muted">Email</label>
+    <form onSubmit={onSubmit} className="space-y-6">
+      <div className="space-y-2">
+        <label htmlFor="email" className="text-sm font-medium text-text">
+          Email
+        </label>
         <Input
+          id="email"
           type="email"
           placeholder="you@example.com"
           value={form.email}
@@ -68,11 +68,14 @@ export function LoginForm() {
         />
       </div>
 
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-text-muted">Password</label>
+      <div className="space-y-2">
+        <label htmlFor="password" className="text-sm font-medium text-text">
+          Password
+        </label>
         <Input
+          id="password"
           type="password"
-          placeholder="••••••••"
+          placeholder="Enter your password"
           value={form.password}
           onChange={(e) =>
             setForm((prev) => ({ ...prev, password: e.target.value }))
@@ -80,10 +83,14 @@ export function LoginForm() {
         />
       </div>
 
-      {error ? <p className="text-xs text-red-400">{error}</p> : null}
+      {error ? (
+        <div className="rounded-lg border border-[#EDC0B6] bg-destructive-muted px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      ) : null}
 
       <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading ? 'Signing in…' : 'Login'}
+        {isLoading ? 'Signing in...' : 'Login'}
       </Button>
     </form>
   );

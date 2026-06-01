@@ -8,7 +8,7 @@ import { EventChangeLogsModule } from '../event-change-logs/event-change-logs.mo
 import { NotificationsModule } from '../notifications/notifications.module';
 import { RegistrationsModule } from '../registrations/registrations.module';
 import { EventCapacityGateway } from './realtime/event-capacity.gateway';
-import { EventCapacityRealtimeService } from './realtime/event-capacity-realtime.service';
+import { EventCapacityRealtimeService } from './repositories/event-capacity-realtime.service';
 
 @Module({
   imports: [

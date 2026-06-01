@@ -117,6 +117,7 @@ export const useEvents = (filters: EventsFilters = {}) => {
   return useQuery({
     queryKey: ['events', filters],
     queryFn: () => fetchEvents(filters),
+    placeholderData: (previousEvents) => previousEvents,
   });
 };
 
@@ -185,18 +186,21 @@ export const useDeleteEvent = (id: string) => {
   });
 };
 
-export function getEventMutationErrorMessage(error: unknown): string {
+export function getEventMutationErrorMessage(
+  error: unknown,
+  fallback = 'Unable to save event changes.',
+): string {
   if (!isAxiosError<ApiErrorResponse>(error)) {
-    return 'Unable to save event changes.';
+    return fallback;
   }
 
   const message = error.response?.data?.message;
 
   if (Array.isArray(message)) {
-    return message[0] ?? 'Unable to save event changes.';
+    return message[0] ?? fallback;
   }
 
-  return message ?? 'Unable to save event changes.';
+  return message ?? fallback;
 }
 
 export const useEventChangeLogs = (id: string, enabled = true) => {

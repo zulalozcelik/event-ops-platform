@@ -19,7 +19,7 @@ import type {
 } from './types/registration-flow.type';
 import { RegistrationConflictError } from './types/registration-flow.type';
 import { NotificationsService } from '../notifications/notifications.service';
-import { EventCapacityRealtimeService } from '../events/realtime/event-capacity-realtime.service';
+import { EventCapacityRealtimeService } from '../events/repositories/event-capacity-realtime.service';
 
 export interface OrganizerDashboardSummary {
   totalEvents: number;

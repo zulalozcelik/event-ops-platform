@@ -133,7 +133,7 @@ export default function EditEventPage({
           <ArrowLeftIcon className="mr-2 h-4 w-4" />
           Back to Events
         </Link>
-        <div className="rounded-xl border border-border bg-surface p-5 text-sm text-destructive shadow-sm">
+        <div className="rounded-xl border border-border bg-surface p-6 text-sm text-destructive shadow-sm">
           Event could not be loaded.
         </div>
       </div>
@@ -143,7 +143,7 @@ export default function EditEventPage({
   if (!canEditEvent) {
     return (
       <div className="flex min-h-[50vh] w-full items-center justify-center">
-        <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 text-center shadow-sm">
+        <div className="w-full max-w-md rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
           <h1 className="text-2xl font-semibold text-text">Access denied</h1>
           <p className="mt-2 text-sm text-text-muted">
             Only the event owner can edit this event.
@@ -172,16 +172,17 @@ export default function EditEventPage({
       </Link>
 
       <EventForm
-        title="Edit Event"
+        mode="edit"
+        title="Edit event"
         description="Update event details here. Saving this form should create change history entries and attendee notifications."
         values={formValues}
-        submitLabel="Save Changes"
+        submitLabel="Save changes"
         isSubmitting={isPending || isDeleting}
         errorMessage={
           updateError
-            ? getEventMutationErrorMessage(updateError)
+            ? getEventMutationErrorMessage(updateError, 'Unable to update event.')
             : deleteError
-              ? getEventMutationErrorMessage(deleteError)
+              ? getEventMutationErrorMessage(deleteError, 'Unable to delete event.')
               : undefined
         }
         onChange={handleChange}

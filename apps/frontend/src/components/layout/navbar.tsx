@@ -17,6 +17,13 @@ const guestLinks = [
   { href: '/register', label: 'Register' },
 ];
 
+function navClass(isActive: boolean) {
+  return cn(
+    'rounded-md px-3 py-2 text-text-muted transition-colors hover:bg-surface-muted hover:text-text',
+    isActive && 'bg-surface-muted font-medium text-text',
+  );
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const { isAuthenticated, user, clearAuth } = useAuthStore();
@@ -27,112 +34,81 @@ export function Navbar() {
   }
 
   return (
-    <header className="border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-surface text-sm font-bold">
+    <header className="sticky top-0 z-40 border-b border-border bg-surface">
+      <div className="mx-auto flex min-h-[72px] max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-6">
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-foreground">
             EO
           </div>
-          <span className="text-sm font-medium text-text-muted">
+          <span className="truncate font-display text-sm font-semibold text-text">
             Event Ops Platform
           </span>
         </Link>
 
-        <nav className="flex items-center gap-6 text-sm">
+        <nav className="order-3 flex w-full items-center gap-1 overflow-x-auto text-sm md:order-2 md:w-auto md:gap-2 md:overflow-visible">
           {!isAuthenticated ? (
             publicLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={cn(
-                  'text-text-muted hover:text-text transition-colors',
-                  pathname === link.href && 'text-text font-medium',
-                )}
+                className={navClass(pathname === link.href)}
               >
                 {link.label}
               </Link>
             ))
+          ) : user?.role === 'ORGANIZER' || user?.role === 'ADMIN' ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={navClass(pathname === '/dashboard')}
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/events"
+                className={navClass(pathname === '/events')}
+              >
+                Events
+              </Link>
+              <Link
+                href="/notifications"
+                className={navClass(pathname === '/notifications')}
+              >
+                Notifications
+              </Link>
+              <Link
+                href="/events/create"
+                className={navClass(pathname === '/events/create')}
+              >
+                Create Event
+              </Link>
+            </>
           ) : (
             <>
-              {user?.role === 'ORGANIZER' || user?.role === 'ADMIN' ? (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className={cn(
-                      'text-text-muted hover:text-text transition-colors',
-                      pathname === '/dashboard' && 'text-text font-medium',
-                    )}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/events"
-                    className={cn(
-                      'text-text-muted hover:text-text transition-colors',
-                      pathname === '/events' && 'text-text font-medium',
-                    )}
-                  >
-                    Events
-                  </Link>
-                  <Link
-                    href="/notifications"
-                    className={cn(
-                      'text-text-muted hover:text-text transition-colors',
-                      pathname === '/notifications' && 'text-text font-medium',
-                    )}
-                  >
-                    Notifications
-                  </Link>
-                  <Link
-                    href="/events/create"
-                    className={cn(
-                      'text-text-muted hover:text-text transition-colors',
-                      pathname === '/events/create' && 'text-text font-medium',
-                    )}
-                  >
-                    Create Event
-                  </Link>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/events"
-                    className={cn(
-                      'text-text-muted hover:text-text transition-colors',
-                      pathname === '/events' && 'text-text font-medium',
-                    )}
-                  >
-                    Events
-                  </Link>
-                  <Link
-                    href="/notifications"
-                    className={cn(
-                      'text-text-muted hover:text-text transition-colors',
-                      pathname === '/notifications' && 'text-text font-medium',
-                    )}
-                  >
-                    Notifications
-                  </Link>
-                  <Link
-                    href="/registrations"
-                    className={cn(
-                      'text-text-muted hover:text-text transition-colors',
-                      pathname === '/registrations' && 'text-text font-medium',
-                    )}
-                  >
-                    My Registrations
-                  </Link>
-                </>
-              )}
+              <Link href="/events" className={navClass(pathname === '/events')}>
+                Events
+              </Link>
+              <Link
+                href="/notifications"
+                className={navClass(pathname === '/notifications')}
+              >
+                Notifications
+              </Link>
+              <Link
+                href="/registrations"
+                className={navClass(pathname === '/registrations')}
+              >
+                My Registrations
+              </Link>
             </>
           )}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="order-2 flex items-center gap-3 md:order-3">
           {isAuthenticated ? (
             <>
-              <span className="hidden text-xs text-text-muted sm:inline">
-                {user?.name} ({user?.role})
+              <span className="hidden max-w-44 truncate rounded-md bg-surface-muted px-3 py-1.5 text-xs font-medium text-text-muted sm:inline">
+                {user?.name} / {user?.role}
               </span>
               <Button variant="outline" onClick={handleLogout}>
                 Logout

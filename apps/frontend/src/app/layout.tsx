@@ -19,7 +19,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <Providers>
           <div className="flex min-h-screen flex-col">
             <Navbar />
-            <main className="mx-auto flex w-full max-w-7xl flex-1 px-4 py-6 md:px-6 md:py-8">
+            <main className="mx-auto flex w-full max-w-7xl flex-1 px-4 py-8 md:px-6 md:py-10">
               {children}
             </main>
           </div>

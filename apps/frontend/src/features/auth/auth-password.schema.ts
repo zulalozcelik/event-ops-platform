@@ -9,11 +9,11 @@ const SPECIAL_CHARACTER_REGEX = /[^A-Za-z0-9]/;
 export const authPasswordMessages = {
   required: 'Password is required',
   loginMinLength: `Password must be at least ${LOGIN_PASSWORD_MIN_LENGTH} characters`,
-  registerMinLength: `Password must be at least ${REGISTER_PASSWORD_MIN_LENGTH} characters`,
+  registerMinLength: `Password must be at least ${REGISTER_PASSWORD_MIN_LENGTH} characters.`,
   maxLength: `Password must be at most ${PASSWORD_MAX_LENGTH} characters`,
-  requiresUppercase: 'Password must include at least 1 uppercase letter',
+  requiresUppercase: 'Password must include at least one uppercase letter.',
   requiresSpecialCharacter:
-    'Password must include at least 1 special character',
+    'Password must include at least one special character.',
 } as const;
 
 export const loginPasswordSchema = z
@@ -26,7 +26,12 @@ export const loginPasswordSchema = z
     message: authPasswordMessages.loginMinLength,
   });
 
-export const registerPasswordSchema = loginPasswordSchema
+export const registerPasswordSchema = z
+  .string()
+  .max(PASSWORD_MAX_LENGTH, authPasswordMessages.maxLength)
+  .refine((value) => value.trim().length > 0, {
+    message: authPasswordMessages.required,
+  })
   .refine((value) => value.trim().length >= REGISTER_PASSWORD_MIN_LENGTH, {
     message: authPasswordMessages.registerMinLength,
   })

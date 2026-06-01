@@ -8,15 +8,15 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', ...props }, ref) => {
     const base =
-      'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed ring-offset-surface';
+      'inline-flex min-h-10 items-center justify-center rounded-lg text-sm font-semibold transition duration-150 ease-out active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 ring-offset-surface';
 
     const variants: Record<typeof variant, string> = {
       primary:
-        'bg-accent text-surface hover:bg-accent-soft px-4 py-2 shadow-sm',
+        'bg-accent px-4 py-2 text-accent-foreground hover:bg-accent-soft',
       ghost:
-        'bg-transparent text-text hover:bg-surface-muted/60 px-3 py-2 border border-transparent',
+        'border border-transparent bg-transparent px-3 py-2 text-text hover:bg-surface-muted',
       outline:
-        'bg-transparent text-text border border-border px-4 py-2 hover:bg-surface-muted/60',
+        'border border-border bg-surface px-4 py-2 text-text hover:bg-surface-muted',
     };
 
     return (

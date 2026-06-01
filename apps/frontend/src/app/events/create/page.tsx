@@ -52,7 +52,7 @@ export default function CreateEventPage() {
   if (!user || (user.role !== 'ORGANIZER' && user.role !== 'ADMIN')) {
     return (
       <div className="flex min-h-[50vh] w-full items-center justify-center">
-        <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-8 text-center shadow-sm">
+        <div className="w-full max-w-md rounded-xl border border-border bg-surface p-8 text-center shadow-sm">
           <h1 className="text-2xl font-semibold text-text">Access denied</h1>
           <p className="mt-2 text-sm text-text-muted">
             Only organizers can create events.
@@ -91,12 +91,17 @@ export default function CreateEventPage() {
   return (
     <div className="mx-auto w-full max-w-3xl">
       <EventForm
-        title="Create Event"
+        mode="create"
+        title="Create event"
         description="Set the details once, then update them later from the event page if plans change."
         values={formValues}
-        submitLabel="Create Event"
+        submitLabel="Create event"
         isSubmitting={isPending}
-        errorMessage={error ? getEventMutationErrorMessage(error) : undefined}
+        errorMessage={
+          error
+            ? getEventMutationErrorMessage(error, 'Unable to create event.')
+            : undefined
+        }
         onChange={handleChange}
         onSubmit={handleSubmit}
       />

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { BellRingIcon, ExternalLinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   getNotificationsErrorMessage,
   useMarkNotificationAsRead,
@@ -41,7 +42,7 @@ export default function NotificationsPage() {
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-text">
+          <h1 className="text-3xl font-semibold text-text">
             Notifications
           </h1>
           <p className="mt-1 text-sm text-text-muted">
@@ -59,7 +60,7 @@ export default function NotificationsPage() {
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-text">
+          <h1 className="text-3xl font-semibold text-text">
             Notifications
           </h1>
           <p className="mt-1 text-sm text-text-muted">
@@ -76,7 +77,10 @@ export default function NotificationsPage() {
   return (
     <div className="w-full space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-text">
+        <Badge variant="default" className="mb-3">
+          Notification center
+        </Badge>
+        <h1 className="text-3xl font-semibold text-text">
           Notifications
         </h1>
         <p className="mt-1 text-sm text-text-muted">
@@ -93,7 +97,7 @@ export default function NotificationsPage() {
             No notifications yet
           </h2>
           <p className="mt-2 text-sm text-text-muted">
-            New updates will appear here when an event changes.
+            Event updates will appear here when organizers make changes.
           </p>
         </div>
       ) : (
@@ -101,10 +105,10 @@ export default function NotificationsPage() {
           {data.map((notification) => (
             <article
               key={notification.id}
-              className={`rounded-xl border bg-surface p-5 shadow-sm transition-colors ${
+              className={`rounded-xl border bg-surface p-6 shadow-sm transition-colors ${
                 notification.isRead
                   ? 'border-border'
-                  : 'border-accent-soft bg-surface-muted/40'
+                  : 'border-[#D2B59D] bg-[#F3E4D5]'
               }`}
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -113,15 +117,9 @@ export default function NotificationsPage() {
                     <h2 className="text-base font-semibold text-text">
                       {notification.title}
                     </h2>
-                    <span
-                      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
-                        notification.isRead
-                          ? 'bg-surface-muted text-text-muted'
-                          : 'bg-accent-soft/35 text-text'
-                      }`}
-                    >
+                    <Badge variant={notification.isRead ? 'slate' : 'default'}>
                       {notification.isRead ? 'Read' : 'Unread'}
-                    </span>
+                    </Badge>
                   </div>
                   <p className="text-sm leading-6 text-text-muted">
                     {notification.message}

@@ -4,19 +4,27 @@
 
 @layer base {
   :root {
-    --background: #f5f7fb;
-    --surface: #ffffff;
-    --surface-muted: #eef2f7;
-    --accent: #c9852f;
-    --accent-soft: #e9c48d;
-    --border: #d9e0ea;
-    --muted: #6b7280;
-    --text: #111827;
-    --text-muted: #4b5563;
-    --card: #ffffff;
-    --foreground: #111827;
-    --muted-foreground: #6b7280;
+    --background: #f6f1e8;
+    --surface: #fffdf8;
+    --surface-muted: #efe6d8;
+    --accent: #8a4b2a;
+    --accent-soft: #6f3a20;
+    --accent-foreground: #fff8f0;
+    --secondary-accent: #6f7d45;
+    --secondary-accent-soft: #566333;
+    --border: #d9cdbe;
+    --muted: #8a7d70;
+    --text: #2a211c;
+    --text-muted: #74685e;
+    --card: #fffdf8;
+    --foreground: #2a211c;
+    --muted-foreground: #8a7d70;
     --destructive: #b42318;
+    --destructive-muted: #fde8e3;
+    --success: #5f7f3a;
+    --warning: #b7791f;
+    --info: #3e6c75;
+    --focus-ring: #a45e35;
   }
 
   html,
@@ -28,5 +36,16 @@
 
   body {
     @apply min-h-screen bg-background font-sans text-text antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display;
+  }
+
+  * {
+    @apply border-border;
   }
 }
