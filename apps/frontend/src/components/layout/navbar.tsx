@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils/cn';
 import { logout } from '@/features/auth/auth.api';
+import { useMyNotifications } from '@/features/notifications/notifications.api';
 
 const publicLinks = [
   { href: '/', label: 'Home' },
@@ -27,6 +28,10 @@ function navClass(isActive: boolean) {
 export function Navbar() {
   const pathname = usePathname();
   const { isAuthenticated, user, clearAuth } = useAuthStore();
+  const { data: notifications } = useMyNotifications(user?.id, isAuthenticated);
+  const hasUnreadNotifications = Boolean(
+    notifications?.some((notification) => !notification.isRead),
+  );
 
   async function handleLogout() {
     await logout();
@@ -72,9 +77,18 @@ export function Navbar() {
               </Link>
               <Link
                 href="/notifications"
-                className={navClass(pathname === '/notifications')}
+                className={cn(
+                  navClass(pathname === '/notifications'),
+                  'relative inline-flex items-center gap-2',
+                )}
               >
                 Notifications
+                {hasUnreadNotifications ? (
+                  <span
+                    aria-hidden="true"
+                    className="h-2 w-2 rounded-full bg-[#B42318]"
+                  />
+                ) : null}
               </Link>
               <Link
                 href="/events/create"
@@ -90,9 +104,18 @@ export function Navbar() {
               </Link>
               <Link
                 href="/notifications"
-                className={navClass(pathname === '/notifications')}
+                className={cn(
+                  navClass(pathname === '/notifications'),
+                  'relative inline-flex items-center gap-2',
+                )}
               >
                 Notifications
+                {hasUnreadNotifications ? (
+                  <span
+                    aria-hidden="true"
+                    className="h-2 w-2 rounded-full bg-[#B42318]"
+                  />
+                ) : null}
               </Link>
               <Link
                 href="/registrations"

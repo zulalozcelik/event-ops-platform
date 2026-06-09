@@ -18,12 +18,28 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { EventChangeLogsService } from '@/modules/event-change-logs/event-change-logs.service';
 import { NotificationsService } from '@/modules/notifications/notifications.service';
 import { RegistrationsService } from '@/modules/registrations/registrations.service';
+import type {
+  EventParticipant,
+  EventParticipantStatus,
+} from '@/modules/registrations/types/registration-attendee.type';
 import type { EventDetailResponse } from './types/event-detail.type';
 import {
+  buildEventUpdateNotificationMessage,
   buildEventComparableSnapshot,
   calculateChangedFields,
   hasChangedFields,
 } from './helpers/event-change.helper';
+
+export interface EventParticipantsResponse {
+  eventId: string;
+  capacity: number;
+  counts: {
+    registered: number;
+    waiting: number;
+    cancelled: number;
+  };
+  participants: EventParticipant[];
+}
 
 @Injectable()
 export class EventsService {
@@ -87,6 +103,41 @@ export class EventsService {
       waitlistCount: summary.waitlistCount,
       remainingCapacity: summary.remainingCapacity,
       currentUserRegistrationState: summary.currentUserRegistrationState,
+    };
+  }
+
+  async getEventParticipants(
+    id: string,
+    userId: string,
+    userRole: string,
+  ): Promise<EventParticipantsResponse> {
+    const event = await this.eventRepository.findById(id);
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    if (userRole !== 'ADMIN' && event.organizerId !== userId) {
+      throw new ForbiddenException(
+        'You can only view participants for your own events',
+      );
+    }
+
+    const participants = await this.registrationsService.getParticipantsForEvent(
+      id,
+    );
+
+    const countByStatus = (status: EventParticipantStatus) =>
+      participants.filter((participant) => participant.status === status).length;
+
+    return {
+      eventId: event.id,
+      capacity: event.capacity,
+      counts: {
+        registered: countByStatus('REGISTERED'),
+        waiting: countByStatus('WAITING'),
+        cancelled: 0,
+      },
+      participants,
     };
   }
 
@@ -177,7 +228,12 @@ export class EventsService {
       `Event ${event.id} update found ${attendeeUsers.length} registered attendee records`,
     );
 
-    const changedFieldNames = Object.keys(changedFields).join(', ');
+    const notificationMessage = buildEventUpdateNotificationMessage(
+      event.title,
+      changedFields,
+      beforeSnapshot,
+      mergedEventSnapshot,
+    );
 
     const attendeeNotifications = attendeeUsers
       .filter((attendee) => attendee.userId !== userId)
@@ -186,7 +242,7 @@ export class EventsService {
         eventId: event.id,
         type: 'EVENT_UPDATED',
         title: 'Event updated',
-        message: `${event.title} was updated. Changed fields: ${changedFieldNames}`,
+        message: notificationMessage,
       }));
 
     this.logger.debug(

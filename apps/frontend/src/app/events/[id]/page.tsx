@@ -20,6 +20,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
   useEventChangeLogs,
   useEventDetail,
   type EventDetail,
@@ -27,7 +33,9 @@ import {
 import {
   useCancelRegistration,
   useCreateRegistration,
+  useEventParticipants,
   type CancelRegistrationActionResult,
+  type EventParticipantStatus,
   type RegistrationActionResult,
 } from '@/features/registrations/registrations.api';
 import { formatDate, formatDateTime } from '@/lib/utils/format-date';
@@ -58,6 +66,18 @@ function getEventStatusVariant(status: string) {
 
   if (status === 'DRAFT') {
     return 'slate' as const;
+  }
+
+  return 'danger' as const;
+}
+
+function getParticipantStatusVariant(status: EventParticipantStatus) {
+  if (status === 'REGISTERED') {
+    return 'success' as const;
+  }
+
+  if (status === 'WAITING') {
+    return 'warning' as const;
   }
 
   return 'danger' as const;
@@ -141,12 +161,18 @@ export default function EventDetailPage({
   const canManageEvent = Boolean(
     user && event && (user.role === 'ADMIN' || user.id === event.organizerId),
   );
+  const canViewParticipants = canManageEvent;
 
   const {
     data: changeLogs,
     isLoading: isChangeLogsLoading,
     isError: isChangeLogsError,
   } = useEventChangeLogs(eventId, canManageEvent);
+  const {
+    data: participantsData,
+    isLoading: isParticipantsLoading,
+    isError: isParticipantsError,
+  } = useEventParticipants(eventId, Boolean(event && user && canViewParticipants));
 
   useEffect(() => {
     let active = true;
@@ -275,6 +301,9 @@ export default function EventDetailPage({
   const wasUpdated = searchParams.get('updated') === '1';
   const isFull = event.remainingCapacity === 0;
   const hasChangeLogs = Boolean(changeLogs && changeLogs.length > 0);
+  const hasParticipants = Boolean(
+    participantsData && participantsData.participants.length > 0,
+  );
 
   const renderRegistrationAction = () => {
     if (isOrganizer) {
@@ -519,6 +548,112 @@ export default function EventDetailPage({
           </aside>
         </div>
       </article>
+
+      {canViewParticipants ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg text-text">Participants</CardTitle>
+            <p className="mt-1 text-sm text-text-muted">
+              People who registered or joined the waitlist for this event.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-border bg-surface-muted px-4 py-3">
+                <p className="text-xs font-medium uppercase text-text-muted">
+                  Registered
+                </p>
+                <p className="mt-1 text-lg font-semibold text-text">
+                  {participantsData?.counts.registered ?? event.registeredCount} /{' '}
+                  {participantsData?.capacity ?? event.capacity}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border bg-surface-muted px-4 py-3">
+                <p className="text-xs font-medium uppercase text-text-muted">
+                  Waiting
+                </p>
+                <p className="mt-1 text-lg font-semibold text-text">
+                  {participantsData?.counts.waiting ?? event.waitlistCount}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border bg-surface-muted px-4 py-3">
+                <p className="text-xs font-medium uppercase text-text-muted">
+                  Capacity
+                </p>
+                <p className="mt-1 text-lg font-semibold text-text">
+                  {participantsData?.capacity ?? event.capacity}
+                </p>
+              </div>
+            </div>
+
+            {isParticipantsLoading ? (
+              <div className="space-y-3">
+                {[0, 1, 2].map((row) => (
+                  <div
+                    key={row}
+                    className="grid gap-3 rounded-xl border border-border bg-surface px-4 py-3 md:grid-cols-[1fr_1.4fr_120px_170px]"
+                  >
+                    <div className="h-4 rounded bg-surface-muted" />
+                    <div className="h-4 rounded bg-surface-muted" />
+                    <div className="h-4 rounded bg-surface-muted" />
+                    <div className="h-4 rounded bg-surface-muted" />
+                  </div>
+                ))}
+              </div>
+            ) : isParticipantsError ? (
+              <div className="rounded-xl border border-[#EDC0B6] bg-destructive-muted px-4 py-3 text-sm text-destructive">
+                Unable to load participants right now.
+              </div>
+            ) : !hasParticipants ? (
+              <div className="rounded-xl border border-dashed border-border bg-surface-muted/50 px-4 py-8 text-center">
+                <p className="text-sm font-medium text-text">
+                  No participants yet.
+                </p>
+                <p className="mt-1 text-sm text-text-muted">
+                  Registrations will appear here after attendees join this event.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="w-full min-w-[680px] border-collapse text-left text-sm">
+                  <thead className="bg-surface-muted text-xs uppercase text-text-muted">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">Name</th>
+                      <th className="px-4 py-3 font-semibold">Email</th>
+                      <th className="px-4 py-3 font-semibold">Status</th>
+                      <th className="px-4 py-3 font-semibold">Registered At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-surface">
+                    {participantsData?.participants.map((participant) => (
+                      <tr key={`${participant.status}-${participant.registrationId}`}>
+                        <td className="px-4 py-3 font-medium text-text">
+                          {participant.name}
+                        </td>
+                        <td className="px-4 py-3 text-text-muted">
+                          {participant.email}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            variant={getParticipantStatusVariant(
+                              participant.status,
+                            )}
+                          >
+                            {participant.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3 text-text-muted">
+                          {formatDateTime(participant.registeredAt)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       {canManageEvent ? (
         <section

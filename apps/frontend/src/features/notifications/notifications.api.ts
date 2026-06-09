@@ -43,6 +43,79 @@ export function useMarkNotificationAsRead() {
   });
 }
 
+const legacyFieldLabels: Record<string, string> = {
+  title: 'title',
+  description: 'description',
+  location: 'location',
+  capacity: 'capacity',
+  startAt: 'start time',
+  endAt: 'end time',
+  startDate: 'start time',
+  endDate: 'end time',
+  status: 'status',
+};
+
+function getFriendlyLegacyFields(fields: string[]): string[] {
+  const hasStartChange =
+    fields.includes('startAt') || fields.includes('startDate');
+  const hasEndChange = fields.includes('endAt') || fields.includes('endDate');
+  const readableFields: string[] = [];
+
+  if (hasStartChange && hasEndChange) {
+    readableFields.push('schedule');
+  } else {
+    if (hasStartChange) {
+      readableFields.push('start time');
+    }
+
+    if (hasEndChange) {
+      readableFields.push('end time');
+    }
+  }
+
+  fields.forEach((field) => {
+    if (
+      field === 'startAt' ||
+      field === 'startDate' ||
+      field === 'endAt' ||
+      field === 'endDate'
+    ) {
+      return;
+    }
+
+    const label = legacyFieldLabels[field];
+
+    if (label) {
+      readableFields.push(label);
+    }
+  });
+
+  return readableFields;
+}
+
+export function getReadableNotificationMessage(message: string): string {
+  const legacyPrefix = 'Changed fields:';
+  const legacyPrefixIndex = message.indexOf(legacyPrefix);
+
+  if (legacyPrefixIndex === -1) {
+    return message;
+  }
+
+  const messageStart = message.slice(0, legacyPrefixIndex).trim();
+  const fields = message
+    .slice(legacyPrefixIndex + legacyPrefix.length)
+    .split(',')
+    .map((field) => field.trim())
+    .filter((field) => field.length > 0);
+  const readableFields = getFriendlyLegacyFields(fields);
+
+  if (readableFields.length === 0) {
+    return messageStart || 'This event was updated.';
+  }
+
+  return `${messageStart} Changed: ${readableFields.join(', ')}.`;
+}
+
 export function getNotificationsErrorMessage(error: unknown): string {
   if (!isAxiosError<{ message?: string | string[] }>(error)) {
     return 'Notifications could not be loaded right now.';

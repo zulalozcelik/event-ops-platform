@@ -20,8 +20,18 @@ function getEventStatusVariant(status: string) {
   return 'danger' as const;
 }
 
+function EventsLoadingGrid() {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="h-64 rounded-xl border border-border bg-surface shadow-sm" />
+      <div className="h-64 rounded-xl border border-border bg-surface shadow-sm" />
+      <div className="h-64 rounded-xl border border-border bg-surface shadow-sm" />
+    </div>
+  );
+}
+
 export default function EventsPage() {
-  const [search, setSearch] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [location, setLocation] = useState('');
   const [debouncedLocation, setDebouncedLocation] = useState('');
@@ -29,11 +39,11 @@ export default function EventsPage() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      setDebouncedSearch(search);
+      setDebouncedSearch(searchText);
     }, 300);
 
     return () => window.clearTimeout(timeoutId);
-  }, [search]);
+  }, [searchText]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -54,37 +64,18 @@ export default function EventsPage() {
 
   const { data: events, isLoading, error } = useEvents(filters);
 
-  const hasFilters = Boolean(search.trim() || location.trim() || date);
+  const hasFilters = Boolean(searchText.trim() || location.trim() || date);
   const hasAppliedFilters = Boolean(
     filters.search || filters.location || filters.date,
   );
 
   const handleClearFilters = () => {
-    setSearch('');
+    setSearchText('');
+    setDebouncedSearch('');
     setLocation('');
+    setDebouncedLocation('');
     setDate('');
   };
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-28 rounded-xl border border-border bg-surface shadow-sm" />
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="h-64 rounded-xl border border-border bg-surface shadow-sm" />
-          <div className="h-64 rounded-xl border border-border bg-surface shadow-sm" />
-          <div className="h-64 rounded-xl border border-border bg-surface shadow-sm" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-md border border-[#EDC0B6] bg-destructive-muted p-4 text-destructive text-sm">
-        Failed to load events. Please try again later.
-      </div>
-    );
-  }
 
   return (
     <div className="w-full space-y-6">
@@ -112,8 +103,8 @@ export default function EventsPage() {
             </label>
             <Input
               id="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
               placeholder="Search by event name or description"
             />
           </div>
@@ -159,7 +150,13 @@ export default function EventsPage() {
         </div>
       </div>
 
-      {!events || events.length === 0 ? (
+      {isLoading ? (
+        <EventsLoadingGrid />
+      ) : error ? (
+        <div className="rounded-md border border-[#EDC0B6] bg-destructive-muted p-4 text-destructive text-sm">
+          Failed to load events. Please try again later.
+        </div>
+      ) : !events || events.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-surface p-12 text-center shadow-sm">
           <CalendarIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <h3 className="mt-4 text-lg font-semibold text-foreground">

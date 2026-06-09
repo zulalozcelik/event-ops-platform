@@ -2,6 +2,28 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import type { CurrentUserRegistrationState, Event } from '../events/events.api';
 
+export type EventParticipantStatus = 'REGISTERED' | 'WAITING' | 'CANCELLED';
+
+export interface EventParticipant {
+  registrationId: string;
+  userId: string;
+  name: string;
+  email: string;
+  status: EventParticipantStatus;
+  registeredAt: string;
+}
+
+export interface EventParticipantsResponse {
+  eventId: string;
+  capacity: number;
+  counts: {
+    registered: number;
+    waiting: number;
+    cancelled: number;
+  };
+  participants: EventParticipant[];
+}
+
 export interface MyRegistration {
   id: string;
   state: Exclude<CurrentUserRegistrationState, 'NONE'>;
@@ -100,6 +122,13 @@ export const fetchRegistrationSummaryForEvent = async (
   return data;
 };
 
+export const fetchEventParticipants = async (
+  eventId: string,
+): Promise<EventParticipantsResponse> => {
+  const { data } = await api.get(`/events/${eventId}/participants`);
+  return data;
+};
+
 export const useMyRegistrations = () => {
   return useQuery({
     queryKey: ['registrations', 'me'],
@@ -120,6 +149,14 @@ export const useEventRegistrationSummary = (eventId: string) => {
     queryKey: ['registrations', 'summary', eventId],
     queryFn: () => fetchRegistrationSummaryForEvent(eventId),
     enabled: Boolean(eventId),
+  });
+};
+
+export const useEventParticipants = (eventId: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['events', eventId, 'participants'],
+    queryFn: () => fetchEventParticipants(eventId),
+    enabled: Boolean(eventId) && enabled,
   });
 };
 

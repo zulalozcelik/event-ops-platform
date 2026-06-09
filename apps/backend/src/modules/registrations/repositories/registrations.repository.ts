@@ -5,12 +5,15 @@ import type {
   DrizzleDatabase,
   DrizzleTransaction,
 } from '@/core/database/database.types';
-import { events, registrations, waitlists } from '@/core/database/schema';
+import { events, registrations, users, waitlists } from '@/core/database/schema';
 import {
   IRegistrationRepository,
   RegisterOrWaitlistInput,
 } from './registration.repository.interface';
-import type { UserRegistrationSummary } from '../types/registration-attendee.type';
+import type {
+  EventParticipant,
+  UserRegistrationSummary,
+} from '../types/registration-attendee.type';
 import type {
   CancelRegistrationResult,
   CurrentUserRegistrationState,
@@ -332,6 +335,42 @@ export class DrizzleRegistrationsRepository implements IRegistrationRepository {
       .where(eq(registrations.eventId, eventId));
 
     return rows.map((row) => ({ userId: row.userId }));
+  }
+
+  public async findParticipantsByEventId(
+    eventId: string,
+  ): Promise<EventParticipant[]> {
+    const registrationRows = await this.db
+      .select({
+        registrationId: registrations.id,
+        userId: users.id,
+        name: users.name,
+        email: users.email,
+        status: sql<'REGISTERED'>`'REGISTERED'`,
+        registeredAt: registrations.createdAt,
+      })
+      .from(registrations)
+      .innerJoin(users, eq(registrations.userId, users.id))
+      .where(eq(registrations.eventId, eventId))
+      .orderBy(asc(registrations.createdAt), asc(registrations.id));
+
+    const waitlistRows = await this.db
+      .select({
+        registrationId: waitlists.id,
+        userId: users.id,
+        name: users.name,
+        email: users.email,
+        status: sql<'WAITING'>`'WAITING'`,
+        registeredAt: waitlists.createdAt,
+      })
+      .from(waitlists)
+      .innerJoin(users, eq(waitlists.userId, users.id))
+      .where(eq(waitlists.eventId, eventId))
+      .orderBy(asc(waitlists.createdAt), asc(waitlists.id));
+
+    return [...registrationRows, ...waitlistRows].sort(
+      (left, right) => left.registeredAt.getTime() - right.registeredAt.getTime(),
+    );
   }
 
   private async lockEventRow(

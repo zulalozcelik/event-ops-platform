@@ -18,6 +18,7 @@ import {
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -104,6 +105,31 @@ export class EventsController {
   @Get(':id')
   async getEvent(@Param('id') id: string, @Req() req: RequestWithOptionalUser) {
     return this.eventsService.getEventDetailResponse(id, req.user?.id);
+  }
+
+  @ApiBearerAuth('bearer')
+  @ApiCookieAuth('access_token')
+  @ApiOperation({
+    summary: 'Get event participants',
+    description:
+      'Returns registered and waitlisted participants for an event owned by the current organizer or accessible by an admin.',
+  })
+  @ApiOkResponse({ description: 'Event participants returned successfully.' })
+  @ApiUnauthorizedResponse({ description: 'Authentication is required.' })
+  @ApiForbiddenResponse({
+    description: 'Only the event organizer or an admin can view participants.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/participants')
+  async getEventParticipants(
+    @Param('id') id: string,
+    @Req() req: RequestWithUser,
+  ) {
+    return this.eventsService.getEventParticipants(
+      id,
+      req.user.id,
+      req.user.role,
+    );
   }
 
   @ApiBearerAuth('bearer')

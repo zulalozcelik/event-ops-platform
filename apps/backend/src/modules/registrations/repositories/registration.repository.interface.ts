@@ -1,4 +1,5 @@
 import type {
+  EventParticipant,
   EventAttendeeUser,
   UserRegistrationSummary,
 } from '../types/registration-attendee.type';
@@ -30,6 +31,7 @@ export interface IRegistrationRepository {
   findMine(userId: string): Promise<UserRegistrationSummary[]>;
   countTotalForOrganizerEvents(organizerId: string): Promise<number>;
   findAttendeeUserIdsByEventId(eventId: string): Promise<EventAttendeeUser[]>;
+  findParticipantsByEventId(eventId: string): Promise<EventParticipant[]>;
 }
 
 export interface RegisterOrWaitlistInput {

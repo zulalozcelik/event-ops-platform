@@ -7,6 +7,7 @@ import { BellRingIcon, ExternalLinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
+  getReadableNotificationMessage,
   getNotificationsErrorMessage,
   useMarkNotificationAsRead,
   useMyNotifications,
@@ -122,7 +123,7 @@ export default function NotificationsPage() {
                     </Badge>
                   </div>
                   <p className="text-sm leading-6 text-text-muted">
-                    {notification.message}
+                    {getReadableNotificationMessage(notification.message)}
                   </p>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-text-muted">
                     <span>{formatDateTime(notification.createdAt)}</span>

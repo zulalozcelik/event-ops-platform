@@ -11,7 +11,10 @@ import { REGISTRATION_REPOSITORY } from './repositories/registration.repository.
 import { EventsService } from '../events/events.service';
 import { CreateRegistrationDto } from './dto/create-registration.dto';
 import type { Event } from '../events/entities/event.entity';
-import type { UserRegistrationSummary } from './types/registration-attendee.type';
+import type {
+  EventParticipant,
+  UserRegistrationSummary,
+} from './types/registration-attendee.type';
 import type {
   CancelRegistrationResult,
   EventRegistrationSummary,
@@ -142,6 +145,10 @@ export class RegistrationsService {
     eventId: string,
   ): Promise<{ userId: string }[]> {
     return this.registrationRepository.findAttendeeUserIdsByEventId(eventId);
+  }
+
+  async getParticipantsForEvent(eventId: string): Promise<EventParticipant[]> {
+    return this.registrationRepository.findParticipantsByEventId(eventId);
   }
 
   private validateEventCanAcceptRegistrations(event: Event, userId: string): void {
