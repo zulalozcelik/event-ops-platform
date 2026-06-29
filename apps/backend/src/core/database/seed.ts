@@ -42,6 +42,10 @@ const DEMO_EVENT_TITLES = [
   'Data Integrity in Event Platforms',
   'Design Review Meetup',
   'Graduation Project Demo Rehearsal',
+  'Summer Frontend Practice Lab',
+  'API Testing and Swagger Review',
+  'Portfolio Feedback Afternoon',
+  'Final Project Presentation Clinic',
 ];
 
 type DemoEmail = (typeof DEMO_EMAILS)[number];
@@ -129,6 +133,10 @@ function buildEventDefinitions(): DemoEventDefinition[] {
   const dataIntegrityStart = futureDate(18, 19);
   const designReviewStart = futureDate(21, 15);
   const rehearsalStart = futureDate(25, 10);
+  const summerFrontendLabStart = futureDate(35, 14);
+  const apiTestingStart = futureDate(48, 11);
+  const portfolioFeedbackStart = futureDate(62, 15);
+  const presentationClinicStart = futureDate(76, 10);
 
   return [
     {
@@ -196,6 +204,50 @@ function buildEventDefinitions(): DemoEventDefinition[] {
       organizerEmail: 'organizer.demo@eventops.local',
       startDate: rehearsalStart,
       endDate: addMinutes(rehearsalStart, 90),
+    },
+    {
+      title: 'Summer Frontend Practice Lab',
+      description:
+        'A hands-on practice session for improving component structure, form validation, and page consistency in frontend projects.',
+      location: 'Istanbul Campus, Lab 102',
+      status: 'PUBLISHED',
+      capacity: 18,
+      organizerEmail: 'organizer.demo@eventops.local',
+      startDate: summerFrontendLabStart,
+      endDate: addMinutes(summerFrontendLabStart, 120),
+    },
+    {
+      title: 'API Testing and Swagger Review',
+      description:
+        'A practical session about testing backend endpoints, reading Swagger documentation, and verifying protected routes before project presentation.',
+      location: 'Engineering Building, Room B08',
+      status: 'PUBLISHED',
+      capacity: 16,
+      organizerEmail: 'organizer.demo@eventops.local',
+      startDate: apiTestingStart,
+      endDate: addMinutes(apiTestingStart, 90),
+    },
+    {
+      title: 'Portfolio Feedback Afternoon',
+      description:
+        'A small group event where students review portfolio pages, project descriptions, and junior developer application materials.',
+      location: 'Career Center, Meeting Room 2',
+      status: 'PUBLISHED',
+      capacity: 12,
+      organizerEmail: 'mert.organizer@eventops.local',
+      startDate: portfolioFeedbackStart,
+      endDate: addMinutes(portfolioFeedbackStart, 120),
+    },
+    {
+      title: 'Final Project Presentation Clinic',
+      description:
+        'A rehearsal session for students preparing their final project explanation, demo flow, and technical Q&A answers.',
+      location: 'Conference Hall B',
+      status: 'PUBLISHED',
+      capacity: 20,
+      organizerEmail: 'mert.organizer@eventops.local',
+      startDate: presentationClinicStart,
+      endDate: addMinutes(presentationClinicStart, 120),
     },
   ];
 }
@@ -388,6 +440,42 @@ async function main(): Promise<void> {
       },
       {
         eventTitle: 'Design Review Meetup',
+        attendeeEmail: 'ayse.attendee@eventops.local',
+      },
+      {
+        eventTitle: 'Summer Frontend Practice Lab',
+        attendeeEmail: 'attendee.demo@eventops.local',
+      },
+      {
+        eventTitle: 'Summer Frontend Practice Lab',
+        attendeeEmail: 'can.attendee@eventops.local',
+      },
+      {
+        eventTitle: 'API Testing and Swagger Review',
+        attendeeEmail: 'ayse.attendee@eventops.local',
+      },
+      {
+        eventTitle: 'API Testing and Swagger Review',
+        attendeeEmail: 'can.attendee@eventops.local',
+      },
+      {
+        eventTitle: 'Portfolio Feedback Afternoon',
+        attendeeEmail: 'attendee.demo@eventops.local',
+      },
+      {
+        eventTitle: 'Portfolio Feedback Afternoon',
+        attendeeEmail: 'ayse.attendee@eventops.local',
+      },
+      {
+        eventTitle: 'Final Project Presentation Clinic',
+        attendeeEmail: 'attendee.demo@eventops.local',
+      },
+      {
+        eventTitle: 'Final Project Presentation Clinic',
+        attendeeEmail: 'can.attendee@eventops.local',
+      },
+      {
+        eventTitle: 'Final Project Presentation Clinic',
         attendeeEmail: 'ayse.attendee@eventops.local',
       },
     ];

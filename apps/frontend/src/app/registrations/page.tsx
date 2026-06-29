@@ -11,6 +11,7 @@ import { useMyRegistrations } from '@/features/registrations/registrations.api';
 import { useAuthStore } from '@/store/auth-store';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatDate } from '@/lib/utils/format-date';
 
 export default function MyRegistrationsPage() {
   const { user } = useAuthStore();
@@ -84,9 +85,11 @@ export default function MyRegistrationsPage() {
               <div className="group flex h-full cursor-pointer flex-col justify-between rounded-xl border border-border bg-card p-6 shadow-sm transition-colors hover:border-accent">
                 <div>
                   <div className="mb-4 flex items-center justify-between gap-3">
-                    <Badge variant="slate">
-                      Entry #{id.substring(0, 8)}
-                    </Badge>
+                    <span className="text-sm text-text-muted">
+                      {state === 'WAITLISTED'
+                        ? `Joined waitlist on ${formatDate(createdAt)}`
+                        : `Registered on ${formatDate(createdAt)}`}
+                    </span>
                     <Badge variant={state === 'REGISTERED' ? 'success' : 'warning'}>
                       {state}
                     </Badge>
@@ -117,12 +120,6 @@ export default function MyRegistrationsPage() {
                         : 'You are currently in the waitlist'}
                     </span>
                   </div>
-                </div>
-
-                <div className="mt-4 border-t border-border/50 pt-4 text-xs text-muted-foreground">
-                  <span>
-                    Updated on {new Date(createdAt).toLocaleDateString()}
-                  </span>
                 </div>
               </div>
             </Link>

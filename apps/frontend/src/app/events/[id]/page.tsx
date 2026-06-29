@@ -38,7 +38,10 @@ import {
   type EventParticipantStatus,
   type RegistrationActionResult,
 } from '@/features/registrations/registrations.api';
-import { formatDate, formatDateTime } from '@/lib/utils/format-date';
+import {
+  formatDateTime,
+  formatEventDateTimeRange,
+} from '@/lib/utils/format-date';
 import { useAuthStore } from '@/store/auth-store';
 import {
   createEventCapacitySocket,
@@ -442,7 +445,7 @@ export default function EventDetailPage({
             <div className="flex items-center gap-2 rounded-xl bg-surface-muted px-3 py-3">
               <CalendarIcon className="h-4 w-4 text-accent" />
               <span>
-                {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                {formatEventDateTimeRange(event.startDate, event.endDate)}
               </span>
             </div>
             <div className="flex items-center gap-2 rounded-xl bg-surface-muted px-3 py-3">
